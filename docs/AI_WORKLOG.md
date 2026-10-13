@@ -746,3 +746,37 @@ The user then asked Claude Code to pause the emulator testing, commit the work i
 - **E2E:** passed earlier this session on the emulator (`01:54 +1: All tests passed!`; see the step 11 entry above).
 
 **Open issues.** None blocking. Still to do: physical-phone install via `adb reverse` (needs the user's device) and the step 12 docs/APK.
+
+---
+
+## 2026-10-13 — Session 2, Step 12: documentation, release APK, final report
+
+**Objective.** SPEC §13 step 12.
+
+**What Claude Code did.**
+- `README.md`:
+  - Prerequisites, quick start, environment, backend scripts.
+  - Running on an emulator or a phone (`adb reverse`).
+  - All tests incl. E2E, release APK, the real-time demo, project structure, known limitations.
+- `docs/API_SPECIFICATION.md`: every endpoint as implemented, with curl examples and response samples captured from the running API.
+- `docs/DATABASE_DESIGN.md`: ER overview, every table and why it exists, constraints, triggers/NOTIFY and how the code handles them,
+  transactions and concurrency, seed/validate flow, test database.
+- `docs/IMPLEMENTATION_PLAN.md`: SPEC §11.5 manual verification checklist with video timestamps (from the reference pack provenance; ffmpeg
+  isn't installed, so frames were not re-extracted). Each item is marked as verified on the emulator, or as still to be checked by the user.
+  Also notes the post-SPEC fill change.
+- **Release APK:** built and smoke-tested on the emulator with the phone set-up (`adb reverse tcp:3000 tcp:3000`,
+  `API_BASE_URL=http://localhost:3000`). Home loaded live data.
+
+**Commands and results actually run.**
+- `flutter build apk --release --dart-define=API_BASE_URL=http://localhost:3000 --dart-define=DEMO_USER_ID=00000000-0000-4000-8000-000000000001`
+  → "√ Built build\app\outputs\flutter-apk\app-release.apk (51.6MB)" (exit 0).
+  The build printed a harmless warning about CupertinoIcons fonts (referenced by Flutter's own iOS-style widgets; this is an Android-only build).
+- `adb install -r …app-release.apk` → Success; `adb reverse tcp:3000 tcp:3000`; launch → Home showed streak 1 and 23 points from the API (screenshot).
+- Final suite results, from the step 11 entry in this session: backend `Tests 136 passed (136)`; Flutter `+145: All tests passed!`; E2E `+1: All tests passed!`.
+
+**Open issues.**
+- AC13 asks for the APK on a **physical phone**. That needs the user's device; it was verified on the emulator using the same `adb reverse` set-up.
+- Most items in the manual checklist need a visual pass by the user. They are covered by widget, integration and E2E tests.
+- The release APK is debug-signed (Flutter template default).
+- `docs/planning/SPEC.md` (including the §9.4 update) is git-ignored by the user's decision, so it is not in the repository.
+- Nothing has been pushed. Pushing to `origin` waits for the user's approval.

@@ -84,7 +84,31 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 | 9 | Lesson player (blocks, questions, feedback, exit sheet, menu, completion) | ✅ done |
 | 10 | Content sync, lifecycle refresh, final error states | ✅ done |
 | 11 | Full test run, fixes, E2E if a device/emulator is available | ✅ done (emulator E2E passed; physical phone pending) |
-| 12 | Docs + worklog completion, release APK, final report | ⏳ |
+| 12 | Docs + worklog completion, release APK, final report | ✅ done (APK: `user_journey/build/app/outputs/flutter-apk/app-release.apk`) |
+
+### Post-SPEC change (2026-10-13)
+**User-requested:** the path fill rule and fill animation. A segment is filled when the node it leads into is completed **or** available, and the fill flows along the path from the top. SPEC §9.4 is updated; see the worklog.
 
 ## Manual verification checklist (SPEC §11.5)
-Filled in during steps 8–12 (reference behaviours with video timestamps, real-time node-count change, APK on phone).
+
+The timestamps come from the reference pack's provenance (manifest `source` and content YAML `provenance`). This machine has no ffmpeg, so
+Claude Code did not re-extract frames. "✅" means verified on the Android emulator in session 2. "☐" means it still needs a manual check by the user, ideally on a phone.
+
+| # | Reference behaviour | Video (s) | How to check | Status |
+|---|---|---|---|---|
+| 1 | Journey: Beginner card (LEVEL-1, illustration), centre/pair node rows, S-curves, checkpoint arch, Insider card | 5.6–17.2 | Open Journey, scroll | ✅ cards, icons, rows, curves (emulator screenshot); checkpoint/Insider ☐ (scroll) |
+| 2 | Path fill flows from the top to the furthest unlocked node; locked sections dark | 4.9–6.2 | Open Journey / Reload | ✅ final state on emulator; partial state covered by widget test |
+| 3 | Node popover: lessons with state icons, START/CONTINUE/DO IT AGAIN, "Completed On" | ~10–17 | Tap node 1 | ✅ via E2E (popover reopened after the lesson) ☐ visual |
+| 4 | Welcome lesson: waving hand, numbered list 1–5, highlights, callout | 26–42 | Node 1 → START | ✅ played in E2E ☐ visual |
+| 5 | Food zones: graded questions → "Not quite…" feedback card, highlighted correct answer, explanation; zone icon headings + accordions | 47–95 | Node 2 lesson | ✅ feedback card in E2E ☐ visual |
+| 6 | Completion screen with medal, "You have won the day 😎" | 92 | Finish a lesson | ✅ E2E (+3 shown) |
+| 7 | Mindful eating: testimonial image, highlighted bold list | 101–118 | Node 3 lesson | ☐ |
+| 8 | Flavour centre: final graded question | 124–138 | Node 4 lesson | ☐ |
+| 9 | Procrastination: ungraded multiple choice, two free-text answers, interpolated on the next page | 143–172 | Node 5 lesson | ☐ (widget-tested) |
+| 10 | Visual hunger: graded recall question, callout with eyes | 180–192 | Node 6 lesson | ☐ |
+| 11 | Checkpoint opens its lesson directly (no popover) and unlocks Insider | 196–199 | Tap checkpoint | ☐ (integration- and widget-tested) |
+| 12 | Exit sheet, "Your progress will be lost", ⋮ menu Save Lesson toast, "Faced some issue ?" dialog | — | In any lesson | ☐ (widget-tested) |
+| 13 | Real-time: `npm run demo:set-node-count -- --level insider_l2 --count 5` while the Journey is open | — | See README | ✅ emulator: toast + re-fetch about 2 s after commit; reverted to 3 |
+| 14 | Reload overlay ("Reloading Your Journey") | — | Tap Reload | ☐ (widget-tested) |
+| 15 | API stopped → every screen shows its error state and recovers on Retry | — | Stop `npm run dev` | ☐ (widget-tested per screen) |
+| 16 | Release APK installs and runs the §11.4 flow on a phone over `adb reverse` | — | README "Release APK" | ☐ needs the user's phone |
