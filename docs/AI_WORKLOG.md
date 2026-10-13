@@ -184,3 +184,87 @@ for step 5/6:
 - `npx vitest run` → `Test Files  4 passed (4)` / `Tests  20 passed (20)`.
 
 **Open issues.** None.
+
+---
+
+## 2026-10-13 — Session 1, Step 5: reference pack, Fluent Emoji, seeder, validator, reset/demo scripts
+
+**Objective.** SPEC §13 step 5.
+
+**What Claude Code did.**
+- **Reference pack:**
+  - Copied `journey_content.yaml` → `seed/journey_content.yaml` and `manifest.json` → `seed/asset-manifest.json`.
+  - Copied the 45 PNG crops → `static/assets/`.
+- **Fluent Emoji:** downloaded the 9 assets with `replace_with` from `microsoft/fluentui-emoji`, using the 3D PNGs from commit `1ffb34c7…`.
+  - Each upstream path was verified (HTTP 200) before use. None of the 9 has skin-tone variants, so all come from `<Name>/3D/`.
+  - Downloads went into an empty scratch folder and were checked for a PNG signature (all 256×256) before copying.
+  - Result: 5 crops replaced (`callout_ten_minutes`, `icon_zone_1..4`) and 4 new files (`feedback_correct`, `node_insider_*`).
+  - Wrote `static/assets/ATTRIBUTION.md` with the upstream paths and the MIT text, diffed against the upstream LICENSE.
+- **Content library:**
+  - `src/lib/markup.ts`: markup validator; the scanning rule is documented for the Flutter parser to mirror.
+  - `src/lib/assets.ts`: relative asset URLs and PNG size reader.
+  - `src/content/schema.ts`: strict Zod schema for the YAML and manifest. Only `provenance`, `notes` and `corrections` are allowed as documentation keys.
+  - `src/content/model.ts`: normalised model, placeholder expansion, plain-string options.
+  - `src/content/validate.ts`: every SPEC §7.6 rule.
+- **Admin library:**
+  - `src/admin/seed.ts`: a diffing upsert by key in one transaction.
+  - `src/admin/nodeCount.ts`.
+  - `src/admin/progress.ts`.
+- **Scripts:** `content:validate`, `db:seed` (`--test`), `progress:reset [--user]`, `demo:set-node-count --level --count`.
+
+**Decisions (Claude Code; open details not fixed by the SPEC).**
+- **Seeder idempotency.** The schema's statement-level triggers fire even for statements that change no rows. The seeder therefore
+  reads existing rows, compares them (jsonb compared with a stable key order) and issues statements only for real differences.
+  A rerun issues zero writes, so the content version is unchanged.
+- **Pages and blocks:**
+  - Pages are identified by (lesson, position). A page whose type changes is replaced.
+  - Blocks are compared as a whole tree per page; any difference replaces that page's blocks.
+  - Options are identified by position, so their ids survive label edits, since answers reference option ids.
+- **Rows the YAML doesn't mention** (e.g. demo nodes) are never deleted. The seeder unpublishes or deactivates them and moves them after the YAML rows.
+  So `db:seed` restores the YAML journey, and `demo:set-node-count` can republish the same demo nodes later.
+- **Empty `explanation: ""`** is stored as NULL (no explanation on the feedback card).
+- **Single-choice questions** store `max_selections = 1` (SPEC example payload; schema `ck_single_choice_max`).
+- **Media sizes:** `media_assets.width/height` come from the actual PNG file, not the manifest. The Fluent replacements are 256×256, not the crop sizes.
+- **`demo:set-node-count`** details:
+  - Demo node titles continue the "Day N" numbering (e.g. Insider `demo_insider_l2_4` → "Day 10").
+  - The demo lesson is "Demo lesson i", with a heading and paragraph and the YAML placeholder template's CTA and completion copy.
+  - The icon is reused from the level's last lesson node.
+  - The count must be 0–60 (the SPEC engine-test range).
+- **Content validator extras** beyond the SPEC list, each catching a real failure mode:
+  - Unknown/typo keys.
+  - Duplicate keys.
+  - Unknown `{{…}}` tokens.
+  - `answer_key` only on free-text questions.
+  - Duplicate option labels (a DB unique constraint).
+  - At least one active feedback message per outcome.
+  - The required `ui_assets` exist.
+
+**Bugs found and fixed.**
+- **Content YAML bug, caught by the new validator.** In the checkpoint quiz, the option
+  `{ label: Wanting to eat because you see tasty food, even when you're not hungry, correct: true }` is an unquoted
+  YAML flow mapping. The comma splits it, so the label became "Wanting to eat because you see tasty food" plus a stray key.
+  Claude Code quoted the label **in the backend copy** (`seed/journey_content.yaml`) only; the original in `Resources/` is untouched.
+  This is a syntax fix that restores the evidently intended text, not a content change.
+- An inline Python-or-Node edit command hung (the Windows `python` Store stub) and was stopped. The edits were redone with the Edit tool.
+- The test regex for the "exactly one correct option (found 2)" message was wrong in the test, not in the validator; fixed the test.
+
+**Commands and tests actually run.**
+- `npm run content:validate` → "Content OK: 2 statuses, 30 lessons (19 placeholders), 74 pages, 49 assets." (exit 0).
+  Before the YAML fix it exited 1 with the issue above.
+- `npm run db:seed` (dev): run 1 inserted media_assets=49, app_copy=54, feedback_reasons=6, answer_feedback_messages=6,
+  journey_statuses=2, journey_levels=2, journey_nodes=10, lessons=30, lesson_pages=74, page_blocks=291, page_questions=18,
+  question_options=60, at content version 205. Run 2: inserted none / updated none / deleted none, version still 205.
+- `npm run demo:set-node-count -- --level insider_l2 --count 5` (created `demo_insider_l2_4/5`), then `--count 3`, `5`, `3`
+  (unpublish and republish), then `--level nope` → "Unknown level" (exit 1). Insider ended at 3 published nodes.
+- `npm run progress:reset` → all deletes 0 (no progress yet), total reset. `db:seed` afterwards → no changes.
+- `npx tsc --noEmit` OK. `npx eslint .` clean. `npx prettier --check .` clean.
+- `npx vitest run` → `Test Files  7 passed (7)` / `Tests  61 passed (61)`. New tests cover:
+  - Markup and the validator rules, including that the real content validates.
+  - Placeholder expansion.
+  - Seed tree shape and idempotency (identical row counts, unchanged version, zero writes).
+  - In-place edits that keep option ids.
+  - set-node-count up/down/republish, checkpoint last, invalid input.
+  - A later seed restoring the YAML nodes.
+  - progress:reset.
+
+**Open issues.** The SSE "exactly one event" part of the `demo:set-node-count` test needs the events module (step 6).

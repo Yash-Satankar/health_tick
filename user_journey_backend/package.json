@@ -20,7 +20,12 @@
     "test:integration": "vitest run test/integration",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:migrate:test": "tsx scripts/migrate.ts --test",
-    "db:codegen": "tsx scripts/codegen.ts"
+    "db:codegen": "tsx scripts/codegen.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:seed:test": "tsx scripts/seed.ts --test",
+    "content:validate": "tsx scripts/validate-content.ts",
+    "progress:reset": "tsx scripts/reset-progress.ts",
+    "demo:set-node-count": "tsx scripts/set-node-count.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",

@@ -1,0 +1,572 @@
+{
+  "note": "Crops are 576px-wide video frames. Items with replace_with must be downloaded from microsoft/fluentui-emoji (MIT) and saved under the same file name; verify the exact path and keep LICENSE attribution in assets/ATTRIBUTION.md.",
+  "assets": [
+    {
+      "key": "callout_eyes",
+      "file": "callout_eyes.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 108,
+      "height": 82,
+      "source": "reference video @ 188.5s",
+      "quality": "good",
+      "alt_text": "eyes"
+    },
+    {
+      "key": "callout_small_steps",
+      "file": "callout_small_steps.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 73,
+      "height": 86,
+      "source": "reference video @ 154.75s",
+      "quality": "soft",
+      "alt_text": "small steps"
+    },
+    {
+      "key": "callout_team",
+      "file": "callout_team.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 98,
+      "height": 93,
+      "source": "reference video @ 39.25s",
+      "quality": "soft",
+      "alt_text": "team"
+    },
+    {
+      "key": "callout_ten_minutes",
+      "file": "callout_ten_minutes.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 94,
+      "height": 83,
+      "source": "reference video @ 156.25s",
+      "quality": "low",
+      "alt_text": "ten minutes",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Hourglass not done"
+      }
+    },
+    {
+      "key": "callout_zone_plate_96",
+      "file": "callout_zone_plate_96.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 106,
+      "height": 105,
+      "source": "reference video @ 74.74s",
+      "quality": "good",
+      "alt_text": "zone plate 96"
+    },
+    {
+      "key": "card_beginner_illustration",
+      "file": "card_beginner_illustration.png",
+      "kind": "image",
+      "format": "png",
+      "width": 210,
+      "height": 245,
+      "source": "reference video @ 5.58s",
+      "quality": "good",
+      "alt_text": "beginner illustration"
+    },
+    {
+      "key": "card_insider_illustration",
+      "file": "card_insider_illustration.png",
+      "kind": "image",
+      "format": "png",
+      "width": 254,
+      "height": 270,
+      "source": "reference video @ 17.17s",
+      "quality": "good",
+      "alt_text": "insider illustration"
+    },
+    {
+      "key": "feedback_oops_sign",
+      "file": "feedback_oops_sign.png",
+      "kind": "image",
+      "format": "png",
+      "width": 142,
+      "height": 250,
+      "source": "reference video @ 65.0s",
+      "quality": "good",
+      "alt_text": "oops sign"
+    },
+    {
+      "key": "feedback_open_hand",
+      "file": "feedback_open_hand.png",
+      "kind": "image",
+      "format": "png",
+      "width": 200,
+      "height": 204,
+      "source": "reference video @ 61.0s",
+      "quality": "good",
+      "alt_text": "open hand"
+    },
+    {
+      "key": "feedback_pointing_hand",
+      "file": "feedback_pointing_hand.png",
+      "kind": "image",
+      "format": "png",
+      "width": 175,
+      "height": 232,
+      "source": "reference video @ 56.6s",
+      "quality": "good",
+      "alt_text": "pointing hand"
+    },
+    {
+      "key": "icon_zone_1",
+      "file": "icon_zone_1.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 50,
+      "height": 44,
+      "source": "reference video @ 78.0s",
+      "quality": "low",
+      "alt_text": "zone 1",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Green salad"
+      }
+    },
+    {
+      "key": "icon_zone_2",
+      "file": "icon_zone_2.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 45,
+      "height": 44,
+      "source": "reference video @ 78.0s",
+      "quality": "low",
+      "alt_text": "zone 2",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Cooked rice"
+      }
+    },
+    {
+      "key": "icon_zone_3",
+      "file": "icon_zone_3.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 54,
+      "height": 41,
+      "source": "reference video @ 78.0s",
+      "quality": "low",
+      "alt_text": "zone 3",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Hamburger"
+      }
+    },
+    {
+      "key": "icon_zone_4",
+      "file": "icon_zone_4.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 44,
+      "height": 35,
+      "source": "reference video @ 78.0s",
+      "quality": "low",
+      "alt_text": "zone 4",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Cookie"
+      }
+    },
+    {
+      "key": "lesson_apple_journey",
+      "file": "lesson_apple_journey.png",
+      "kind": "image",
+      "format": "png",
+      "width": 379,
+      "height": 476,
+      "source": "reference video @ 38.5s",
+      "quality": "soft",
+      "alt_text": "apple journey"
+    },
+    {
+      "key": "lesson_clapping_hands",
+      "file": "lesson_clapping_hands.png",
+      "kind": "image",
+      "format": "png",
+      "width": 324,
+      "height": 395,
+      "source": "reference video @ 151.75s",
+      "quality": "good",
+      "alt_text": "clapping hands"
+    },
+    {
+      "key": "lesson_cookie_temptation",
+      "file": "lesson_cookie_temptation.png",
+      "kind": "image",
+      "format": "png",
+      "width": 376,
+      "height": 236,
+      "source": "reference video @ 186.5s",
+      "quality": "good",
+      "alt_text": "cookie temptation"
+    },
+    {
+      "key": "lesson_distracted_eating",
+      "file": "lesson_distracted_eating.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 318,
+      "source": "reference video @ 111.0s",
+      "quality": "good",
+      "alt_text": "distracted eating"
+    },
+    {
+      "key": "lesson_dominoes",
+      "file": "lesson_dominoes.png",
+      "kind": "image",
+      "format": "png",
+      "width": 556,
+      "height": 319,
+      "source": "reference video @ 49.0s",
+      "quality": "good",
+      "alt_text": "dominoes"
+    },
+    {
+      "key": "lesson_flavour_dessert",
+      "file": "lesson_flavour_dessert.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 319,
+      "source": "reference video @ 126.48s",
+      "quality": "good",
+      "alt_text": "flavour dessert"
+    },
+    {
+      "key": "lesson_flavour_plate",
+      "file": "lesson_flavour_plate.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 319,
+      "source": "reference video @ 128.59s",
+      "quality": "good",
+      "alt_text": "flavour plate"
+    },
+    {
+      "key": "lesson_flavour_smile",
+      "file": "lesson_flavour_smile.png",
+      "kind": "image",
+      "format": "png",
+      "width": 569,
+      "height": 320,
+      "source": "reference video @ 130.79s",
+      "quality": "good",
+      "alt_text": "flavour smile"
+    },
+    {
+      "key": "lesson_food_zones_pie",
+      "file": "lesson_food_zones_pie.png",
+      "kind": "image",
+      "format": "png",
+      "width": 455,
+      "height": 469,
+      "source": "reference video @ 76.12s",
+      "quality": "good",
+      "alt_text": "food zones pie"
+    },
+    {
+      "key": "lesson_mind_wandering",
+      "file": "lesson_mind_wandering.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 319,
+      "source": "reference video @ 109.96s",
+      "quality": "good",
+      "alt_text": "mind wandering"
+    },
+    {
+      "key": "lesson_motivation_graph",
+      "file": "lesson_motivation_graph.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 417,
+      "source": "reference video @ 36.3s",
+      "quality": "good",
+      "alt_text": "motivation graph"
+    },
+    {
+      "key": "lesson_mountain_goals",
+      "file": "lesson_mountain_goals.png",
+      "kind": "image",
+      "format": "png",
+      "width": 547,
+      "height": 312,
+      "source": "reference video @ 153.25s",
+      "quality": "soft",
+      "alt_text": "mountain goals"
+    },
+    {
+      "key": "lesson_procrastination",
+      "file": "lesson_procrastination.png",
+      "kind": "image",
+      "format": "png",
+      "width": 520,
+      "height": 387,
+      "source": "reference video @ 145.75s",
+      "quality": "soft",
+      "alt_text": "procrastination"
+    },
+    {
+      "key": "lesson_target",
+      "file": "lesson_target.png",
+      "kind": "image",
+      "format": "png",
+      "width": 349,
+      "height": 329,
+      "source": "reference video @ 159.5s",
+      "quality": "good",
+      "alt_text": "target"
+    },
+    {
+      "key": "lesson_testimonial_saravanan",
+      "file": "lesson_testimonial_saravanan.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 552,
+      "source": "reference video @ 115.4s",
+      "quality": "soft",
+      "alt_text": "User review: Saravanan says Mindful Eating is one of the best things he learned"
+    },
+    {
+      "key": "lesson_waving_hand",
+      "file": "lesson_waving_hand.png",
+      "kind": "image",
+      "format": "png",
+      "width": 192,
+      "height": 172,
+      "source": "reference video @ 28.6s",
+      "quality": "good",
+      "alt_text": "waving hand"
+    },
+    {
+      "key": "lesson_zone1_plate",
+      "file": "lesson_zone1_plate.png",
+      "kind": "image",
+      "format": "png",
+      "width": 537,
+      "height": 248,
+      "source": "reference video @ 79.25s",
+      "quality": "good",
+      "alt_text": "zone1 plate"
+    },
+    {
+      "key": "lesson_zone2_plate",
+      "file": "lesson_zone2_plate.png",
+      "kind": "image",
+      "format": "png",
+      "width": 543,
+      "height": 252,
+      "source": "reference video @ 81.66s",
+      "quality": "good",
+      "alt_text": "zone2 plate"
+    },
+    {
+      "key": "lesson_zone3_plate",
+      "file": "lesson_zone3_plate.png",
+      "kind": "image",
+      "format": "png",
+      "width": 540,
+      "height": 273,
+      "source": "reference video @ 84.09s",
+      "quality": "good",
+      "alt_text": "zone3 plate"
+    },
+    {
+      "key": "lesson_zone4_plate",
+      "file": "lesson_zone4_plate.png",
+      "kind": "image",
+      "format": "png",
+      "width": 541,
+      "height": 267,
+      "source": "reference video @ 86.46s",
+      "quality": "good",
+      "alt_text": "zone4 plate"
+    },
+    {
+      "key": "lesson_zone_bags",
+      "file": "lesson_zone_bags.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 375,
+      "source": "reference video @ 69.9s",
+      "quality": "good",
+      "alt_text": "zone bags"
+    },
+    {
+      "key": "lesson_zones_science",
+      "file": "lesson_zones_science.png",
+      "kind": "image",
+      "format": "png",
+      "width": 555,
+      "height": 466,
+      "source": "reference video @ 72.37s",
+      "quality": "good",
+      "alt_text": "zones science"
+    },
+    {
+      "key": "node_checkpoint_arch",
+      "file": "node_checkpoint_arch.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 225,
+      "height": 240,
+      "source": "reference video @ 17.17s",
+      "quality": "good",
+      "alt_text": "checkpoint arch"
+    },
+    {
+      "key": "node_flavour",
+      "file": "node_flavour.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 114,
+      "height": 114,
+      "source": "reference video @ 10.12s",
+      "quality": "good",
+      "alt_text": "flavour"
+    },
+    {
+      "key": "node_food_zones",
+      "file": "node_food_zones.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 114,
+      "height": 114,
+      "source": "reference video @ 10.12s",
+      "quality": "good",
+      "alt_text": "food zones"
+    },
+    {
+      "key": "node_locked",
+      "file": "node_locked.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 114,
+      "height": 114,
+      "source": "reference video @ 17.17s",
+      "quality": "good",
+      "alt_text": "Locked"
+    },
+    {
+      "key": "node_mindful_eating",
+      "file": "node_mindful_eating.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 114,
+      "height": 114,
+      "source": "reference video @ 10.12s",
+      "quality": "good",
+      "alt_text": "mindful eating"
+    },
+    {
+      "key": "node_procrastination",
+      "file": "node_procrastination.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 114,
+      "height": 114,
+      "source": "reference video @ 10.12s",
+      "quality": "good",
+      "alt_text": "procrastination"
+    },
+    {
+      "key": "node_psychology",
+      "file": "node_psychology.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 114,
+      "height": 114,
+      "source": "reference video @ 10.12s",
+      "quality": "good",
+      "alt_text": "psychology"
+    },
+    {
+      "key": "node_visual_hunger",
+      "file": "node_visual_hunger.png",
+      "kind": "icon",
+      "format": "png",
+      "width": 114,
+      "height": 114,
+      "source": "reference video @ 10.12s",
+      "quality": "good",
+      "alt_text": "visual hunger"
+    },
+    {
+      "key": "ui_completion_medal",
+      "file": "ui_completion_medal.png",
+      "kind": "image",
+      "format": "png",
+      "width": 229,
+      "height": 287,
+      "source": "reference video @ 92.3s",
+      "quality": "good",
+      "alt_text": "Congratulations medal"
+    },
+    {
+      "key": "feedback_correct",
+      "file": "feedback_correct.png",
+      "kind": "image",
+      "format": "png",
+      "source": "TO DOWNLOAD",
+      "quality": "n/a",
+      "alt_text": "Celebration",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Party popper"
+      }
+    },
+    {
+      "key": "node_insider_triggers",
+      "file": "node_insider_triggers.png",
+      "kind": "icon",
+      "format": "png",
+      "source": "TO DOWNLOAD",
+      "quality": "n/a",
+      "alt_text": "Know your triggers",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Magnifying glass tilted left"
+      }
+    },
+    {
+      "key": "node_insider_emotions",
+      "file": "node_insider_emotions.png",
+      "kind": "icon",
+      "format": "png",
+      "source": "TO DOWNLOAD",
+      "quality": "n/a",
+      "alt_text": "Emotional hunger",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Anxious face with sweat"
+      }
+    },
+    {
+      "key": "node_insider_plan",
+      "file": "node_insider_plan.png",
+      "kind": "icon",
+      "format": "png",
+      "source": "TO DOWNLOAD",
+      "quality": "n/a",
+      "alt_text": "Trigger plan",
+      "replace_with": {
+        "set": "fluent-emoji 3D",
+        "emoji": "Spiral notepad"
+      }
+    }
+  ]
+}

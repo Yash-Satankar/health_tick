@@ -1,0 +1,1506 @@
+# =====================================================================
+# HealthTick Journey — seed content v1
+#
+# Source of truth for `npm run db:seed`. The seeder must map this file
+# onto schema v1 (statuses -> levels -> nodes -> lessons -> pages ->
+# blocks / questions / options) and must NOT hardcode any of it elsewhere.
+#
+# Provenance (every lesson has one):
+#   video       = transcribed verbatim from Resources video (timestamps in seconds)
+#   screenshot  = transcribed from the earlier light-mode reference screenshots
+#   authored    = written for this project (no reference available)
+#   placeholder = short stand-in for a lesson whose title is known but
+#                 whose content never appears in the references
+# Small corrections to obvious typos in the original are listed under
+# `corrections` on the lesson.
+#
+# Inline markup inside any `text`/`items`/`explanation`:
+#   **bold**   *italic*   ==highlight==   {{user.name}}   {{answer.<key>}}
+#   (bold and italic may nest: **simply changing *how* we eat**)
+#
+# Asset references use media_assets.key; files live in assets/ and are
+# described in assets/manifest.json.
+# =====================================================================
+
+meta:
+  content_version_note: v1
+  locale: en
+
+demo_user:
+  id: 00000000-0000-4000-8000-000000000001
+  display_name: Yash
+
+# ---------------------------------------------------------------------
+# Static UI copy (app_copy). Keys are referenced by Flutter; values are
+# only ever read from the API.
+# ---------------------------------------------------------------------
+app_copy:
+  home.header.profile: profile
+  home.header.streak: streak
+  home.header.health_points: health points
+  home.today_task.title: today's task
+  home.today_task.journey_link: JOURNEY
+  home.today_task.all_done: You have completed your journey!
+  journey.title: Your Journey
+  journey.reload: Reload
+  journey.search: Search
+  journey.reloading.title: Reloading Your Journey
+  journey.reloading.subtitle: Please wait while we reload your journey
+  journey.card.status_label: Status
+  journey.popover.do_it_again: DO IT AGAIN
+  journey.popover.start: START
+  journey.popover.continue: CONTINUE
+  journey.popover.completed_on: Completed On
+  journey.locked.message: Complete the previous step to unlock this one.
+  journey.updated.toast: Your journey was updated
+  search.placeholder: Search Lesson...
+  search.empty.title: Start typing to search lessons
+  search.no_results.title: No lessons found
+  search.sort.relevance: Most relevant
+  search.sort.journey: Journey order
+  search.result.locked: Locked
+  lesson.exit.title: You have not completed this section yet
+  lesson.exit.message: Your progress will be lost.
+  lesson.exit.confirm: Exit Anyway
+  lesson.exit.cancel: Let's Complete
+  lesson.menu.save: Save Lesson
+  lesson.menu.saved: Lesson saved
+  lesson.menu.unsave: Remove from saved
+  lesson.menu.feedback: Send feedback
+  lesson.saved.toast.title: DONE!
+  lesson.saved.toast.message: Bookmark Added 😁
+  lesson.feedback.title: Faced some issue ?
+  lesson.feedback.subtitle: Please tell us what happened
+  lesson.feedback.other_placeholder: Other (please specify)
+  lesson.feedback.footer: This will help improve the content of our course.
+  lesson.feedback.submit: SUBMIT
+  lesson.feedback.sent.toast: Thanks! Your feedback has been sent.
+  lesson.feedback.other_required: Please tell us a little more in the text box.
+  lesson.free_text.placeholder: Type your response here.
+  lesson.free_text.validation_title: Hello!
+  lesson.choice.validation_message: Please choose an answer to continue.
+  lesson.feedback_card.answer_prefix: "It's - "
+  lesson.completion.continue: Continue
+  error.network.title: You're offline
+  error.network.message: Check your internet connection and try again.
+  error.timeout.message: This is taking longer than usual. Please try again.
+  error.server.message: Something went wrong on our side. Please try again.
+  error.not_found.message: We couldn't find that. It may have been removed.
+  error.locked.message: This lesson is still locked.
+  error.unexpected.message: Something unexpected happened. Please try again.
+  error.retry: Retry
+
+# ---------------------------------------------------------------------
+# Rotating answer-feedback headlines (answer_feedback_messages)
+# ---------------------------------------------------------------------
+answer_feedback_messages:
+  - { key: incorrect_not_quite,     outcome: incorrect, asset: feedback_oops_sign,     headline: "Not quite, but I appreciate your effort." }
+  - { key: incorrect_each_attempt,  outcome: incorrect, asset: feedback_pointing_hand, headline: "Each attempt teaches us something valuable." }
+  - { key: incorrect_dont_worry,    outcome: incorrect, asset: feedback_oops_sign,     headline: "That's not correct, but don't worry—you've got this." }
+  - { key: incorrect_open_hand,     outcome: incorrect, asset: feedback_open_hand,     headline: "Each attempt teaches us something valuable." }
+  # correct-answer screen never appears in the references -> authored
+  - { key: correct_nailed_it,       outcome: correct,   asset: feedback_correct,       headline: "That's right! You nailed it." }
+  - { key: correct_spot_on,         outcome: correct,   asset: feedback_correct,       headline: "Spot on! You're learning fast." }
+
+feedback_reasons:   # 'Faced some issue ?' dialog, in display order
+  - { key: too_text_heavy,        label: Too text heavy }
+  - { key: hard_to_read,          label: Hard to read }
+  - { key: hard_to_apply,         label: Hard to apply }
+  - { key: grammatical_error,     label: Grammatical error }
+  - { key: inappropriate_content, label: Inappropriate content }
+  - { key: others,                label: Others, requires_text: true }
+
+# Shared UI assets the API exposes in /bootstrap
+ui_assets:
+  locked_node: node_locked
+  completion_medal: ui_completion_medal
+
+# =====================================================================
+# JOURNEY
+# =====================================================================
+statuses:
+
+# ---------------------------------------------------------------------
+- key: beginner
+  title: Beginner
+  card_background_color: "#F9E4C9"
+  card_shadow_color: "#DBC4A5"
+  card_text_color: "#1C1C1C"
+  levels:
+  - key: beginner_l1
+    label: LEVEL-1
+    title: Psychology of weight
+    illustration: card_beginner_illustration
+    nodes:
+
+    # ================= NODE 1 =================
+    - key: beginner_day_1
+      type: lesson
+      title: Day 1
+      icon: node_psychology
+      lessons:
+
+      - key: welcome_to_health_tick
+        title: Welcome to Health Tick!
+        provenance: video 26-42
+        corrections: ["original numbered list read 1,1,2,3,4 -> fixed to 1-5"]
+        completion:
+          headline: You have won the day 😎
+          message: Rewatching programs can reignite your motivation and keep you on track.
+        pages:
+        - type: content
+          cta: THAT'S IMPRACTICAL!
+          blocks:
+          - { type: image, asset: lesson_waving_hand }
+          - type: paragraph
+            text: >-
+              Hello {{user.name}}! Welcome and let's get started right away!
+          - type: paragraph
+            text: >-
+              So here it is, from now on, you are going to stick with the following rules without failing a day:
+          - type: numbered_list
+            items:
+            - >-
+              Number one, **no junk Food!** Yes, none at all!
+            - >-
+              Number two, **start exercising for 40-60 minutes** every single day.
+            - >-
+              Number three, **walk 10,000 steps**, the World Health Organization has recommended.
+            - >-
+              Number four, **follow those strict diet plan**, no cheating, okay?
+            - >-
+              Number five, You know, **take 8 hours of sleep.**
+          - type: paragraph
+            text: >-
+              And last but not least, **Don't stress out!** It's really bad for your health.
+          - type: paragraph
+            text: >-
+              That's it! That's all you need to do to lose weight.
+          - type: paragraph
+            text: >-
+              But if it were that easy to follow this perfect weight loss plan, half of the world's population would not be overweight or obese.
+          - type: paragraph
+            text: >-
+              And we would certainly not spend years to make an app like this one. (Which is going to transform your life)
+
+        - type: content
+          cta: 90% - THAT'S HUGE!
+          blocks:
+          - { type: image, asset: lesson_motivation_graph }
+          - type: paragraph
+            text: >-
+              But if we look around we can see many people follow those exact perfect rules.
+          - type: paragraph
+            text: >-
+              So in the start, they are high on motivation, they will do anything you ask them to do.
+          - type: bulleted_list
+            items:
+            - >-
+              They will start exercising daily.
+            - >-
+              They will erase the word "junk food" from their dictionary.
+            - >-
+              They will follow the strict diet plan suggested by the dietician.
+          - type: paragraph
+            text: >-
+              They will do anything under the sun to reach their ideal weight. ==Only to give up after 2 to 3 weeks!==
+          - type: paragraph
+            text: >-
+              Some of us has a huge willpower, and we might follow for like 2 to 3 months. And let me tell you one more surprising fact *(And it's research-backed)*
+          - type: paragraph
+            text: >-
+              ==More than 90% of dieters fail to sustain their weight in the long term.==
+          - type: paragraph
+            text: >-
+              **Why?**
+          - type: paragraph
+            text: >-
+              Because Dieting doesn't work in the long term.
+
+        - type: content
+          cta: CLICK TO FINISH!
+          blocks:
+          - { type: image, asset: lesson_apple_journey }
+          - type: heading
+            text: >-
+              It's going to be different this time!
+          - type: paragraph
+            text: >-
+              {{user.name}}, wherever you've been, whatever you've tried. This time it's going to be different. We are going to help you lose weight and most importantly, maintain it for the long term.
+          - type: paragraph
+            text: >-
+              But, seriously we are not just saying it:
+          - type: callout
+            asset: callout_team
+            text: >-
+              **We're a team of psychologists, habit experts, nutritionists, and physiologists. Helping people become healthier is kind of our thing.**
+
+      - key: the_9_keystone_habits
+        title: The 9 Keystone Habits
+        provenance: "screenshot (pages 1 and 3); pages 2 and 4 authored"
+        completion:
+          headline: You have won the day 😎
+          message: You just understood all the important points.
+        pages:
+        - type: content
+          cta: THAT'S AMAZING
+          blocks:
+          - { type: image, asset: lesson_dominoes }
+          - type: paragraph
+            text: >-
+              {{user.name}}, welcome to your first mini module - **The 9 Keystone Habits**.
+          - type: paragraph
+            text: >-
+              These are the most powerful habits for lasting health changes.
+          - type: paragraph
+            text: >-
+              Research in behavioural science shows that *keystone habits* often trigger many other good habits—often without you even realising it.
+          - type: paragraph
+            text: >-
+              *(Like drinking water automatically reduces food cravings, without you knowing it)*
+        - type: content
+          cta: TELL ME MORE
+          blocks:
+          - type: paragraph
+            text: >-
+              Over the next few days, you'll learn these habits one at a time — no strict rules, no banned foods.
+          - type: paragraph
+            text: >-
+              ==Small habits, practised daily, add up to big results.==
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              But before we do that, we have a question for you - *Why do you think we humans eat?*
+          question:
+            response: multiple_choice
+            graded: false
+            min_selections: 1
+            options: [Hunger, Thirst, Stress, Boredom, Cravings]
+        - type: content
+          cta: GOT IT
+          blocks:
+          - type: paragraph
+            text: >-
+              Interesting, right? We rarely eat only because of hunger.
+          - type: paragraph
+            text: >-
+              Understanding **why** you eat is the first step to changing **how** you eat. That's exactly what the keystone habits will help you with.
+
+      - key: keystone_habit_1_hunger_levels
+        title: "Keystone Habit #1: Identify your hunger levels"
+        provenance: placeholder
+        summary: >-
+          Learn to rate your hunger before you eat so you can tell real hunger from habit.
+      - key: little_secret_part_1
+        title: The little secret to weight loss- Part 1
+        provenance: placeholder
+        summary: >-
+          Lasting weight loss comes from consistent small habits, not short bursts of willpower.
+      - key: set_your_initial_goals
+        title: Set your initial goals
+        provenance: placeholder
+        summary: >-
+          Set one realistic goal for this week that you can actually keep.
+
+    # ================= NODE 2 =================
+    - key: beginner_day_2
+      type: lesson
+      title: Day 2
+      icon: node_food_zones
+      lessons:
+
+      - key: keystone_habit_2_food_zones
+        title: "Keystone Habit #2: Balance your food zones"
+        provenance: video 47-95
+        notes: "zone accordions are never expanded in the video -> example lists are authored from each zone's description"
+        completion:
+          headline: You have won the day 😎
+          message: You just enhanced your ability to apply what you've learned and see better results in your weight loss journey.
+        pages:
+        - type: content
+          cta: ALRIGHT
+          blocks:
+          - { type: image, asset: lesson_dominoes }
+          - type: paragraph
+            text: >-
+              **Hello {{user.name}},**
+          - type: paragraph
+            text: >-
+              Welcome to **Day 2** of your program.
+          - type: paragraph
+            text: >-
+              Many people start something new a lot of enthusiasm, but life gets in the way and they put it off.
+          - type: paragraph
+            text: >-
+              You didn't.
+          - type: paragraph
+            text: >-
+              You showed up for your health, and showing up is half the battle won.
+          - type: paragraph
+            text: >-
+              So, take a moment to appreciate yourself for that 👏
+          - type: paragraph
+            text: >-
+              Now that you're here, it's time to discover ==**Keystone Habit #2 — Balancing Your Food Zones**==.
+          - type: paragraph
+            text: >-
+              But before we get into it, let's take a quick look back at calorie density. Alright?
+
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              First question is - *What is Calorie Density?*
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: The total calories I eat in one day }
+            - { label: How quickly my body burns calories after eating }
+            - { label: The number of calories in a food per gram of its weight, correct: true }
+            - { label: The amount of sugar and fat combined in a food }
+            explanation: ""
+
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              Let's say you have 100g raisins and 100g grapes. Which one has more calorie density?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: Both have same calorie density as they have same weight }
+            - { label: Raisins, correct: true }
+            - { label: Grapes }
+            explanation: |-
+              Raisins are simply dehydrated grapes. Removing water doesn't remove calories. It just makes the food more compact, so the same weight contains more calories.
+
+              Grapes are mostly water (about 80–85%), making them low in calorie density.
+
+              Raisins are only about 15% water, so they pack many more calories into the same weight.
+
+              (Remember, water has 0 calories)
+
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              Which of the following reduces the calorie density of a food?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: A. Water }
+            - { label: B. Fibre }
+            - { label: C. Oil }
+            - { label: D. Both A and B, correct: true }
+            explanation: |-
+              Both **water** and **fibre** lower calorie density because they add bulk and weight to food without adding many calories. This means you feel full with fewer calories.
+
+              Oil, on the other hand, is calorie-dense, so it increases calorie density instead of lowering it.
+
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              Which of the following is true?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: Low CD Foods = Feel full in lesser calories }
+            - { label: High CD Foods = End up eating more calories to feel full }
+            - { label: Both of the above, correct: true }
+            explanation: |-
+              Low calorie density foods have more water and fibre, so they fill you up with fewer calories.
+
+              High calorie density foods have less water and more fat or sugar, so you need to eat more calories to reach the same level of fullness
+
+        - type: content
+          cta: I'M ATTENTIVE
+          blocks:
+          - { type: image, asset: lesson_zone_bags }
+          - type: heading
+            text: >-
+              Keystone Habit #2: Balance your Food Zones
+          - type: paragraph
+            text: >-
+              {{user.name}}, in the start, it's not always clear which foods have a lower CD.
+          - type: paragraph
+            text: >-
+              And no one can memorise the calorie density of all food items! (It's a nightmare)
+          - type: paragraph
+            text: >-
+              So, to make your life simpler, we have divided foods into four categories on the basis of their CD. We call them =="Food Zones"==.
+          - type: paragraph
+            text: >-
+              These ==food zones will help you balance your meals and make mindful eating choices== without overthinking (or carrying a calculator to dinner table)
+
+        - type: content
+          cta: WHAT ARE FOOD ZONES?
+          blocks:
+          - { type: image, asset: lesson_zones_science }
+          - type: paragraph
+            text: >-
+              After careful research and sound nutritional advice, we developed these food zones, and here is how they can help you:
+          - type: bulleted_list
+            items:
+            - >-
+              Your plate will be **full of nutrient-rich foods**. No food is off-limits. **We will never ask you to ban any food groups.**
+            - >-
+              You don't have to sacrifice your taste. You can learn how to **fit your favourite foods into your daily meals.**
+            - >-
+              Develop an eating pattern that you can **sustain for a lifetime.**
+          - type: callout
+            asset: callout_zone_plate_96
+            text: >-
+              **96%** of users say that following food zones makes them **feeling full and eat more foods while cutting calories.**
+          - type: paragraph
+            text: >-
+              And the best? It's super easy to learn and adopt into your life.
+
+        - type: content
+          cta: I'M PAYING ATTENTION
+          blocks:
+          - type: heading
+            text: >-
+              What are Food Zones?
+          - type: paragraph
+            text: >-
+              Well, let's take a closer look at the 4 Food Zones.
+          - { type: image, asset: lesson_food_zones_pie }
+          - { type: icon_heading, asset: icon_zone_1, color: "#F5A04A", text: ZONE-1 }
+          - type: paragraph
+            text: >-
+              **Very Low CD** foods — includes non-starchy fruits and vegetables, soups and skim milk. We recommend
+          - { type: icon_heading, asset: icon_zone_2, color: "#F5A04A", text: ZONE-2 }
+          - type: paragraph
+            text: >-
+              **Low CD** foods — includes cooked grains, breakfast cereals, rice, beans and legumes, low fat milk, low-fat meats, and salads.
+          - { type: icon_heading, asset: icon_zone_3, color: "#F5A04A", text: ZONE-3 }
+          - type: paragraph
+            text: >-
+              **Medium CD** foods — includes meats, high-fat mixed dishes, salad dressing, some snack foods, chapati, tortilla.
+          - { type: icon_heading, asset: icon_zone_4, color: "#F5A04A", text: ZONE-4 }
+          - type: paragraph
+            text: >-
+              **Highest CD** foods — includes crackers, chips, chocolate candies, cookies, nuts, butter and full fat condiments.
+          - type: paragraph
+            text: >-
+              Let's understand each of the Food Zones individually.
+
+        - type: content
+          cta: ZONE 1 = FREE FOOD
+          blocks:
+          - type: heading
+            text: >-
+              Zone-1 (Very Low CD)
+          - type: paragraph
+            text: >-
+              **Eat upto 25% of your total calories this zone**
+          - { type: image, asset: lesson_zone1_plate }
+          - type: paragraph
+            text: >-
+              Foods in Zone 1 are **high in water and fibre and nutrients but low in calories.**
+          - type: paragraph
+            text: >-
+              We can call this zone a =="free zone" as you're free to eat as much as you want from this zone.==
+          - type: paragraph
+            text: >-
+              When you think about Zone 1, think LARGE. Put plenty of it on your plate.
+          - type: paragraph
+            text: >-
+              It will give you plenty of nutrients with minimal calories
+          - type: accordion
+            title: A few examples of Zone 1 foods
+            provenance: authored
+            children:
+            - type: bulleted_list
+              items: [Cucumber, tomato, spinach and other leafy greens, "Watermelon, papaya and oranges", Clear vegetable soups, Skim milk]
+
+        - type: content
+          cta: GOT IT
+          blocks:
+          - type: heading
+            text: >-
+              Zone-2 (Low CD)
+          - type: paragraph
+            text: >-
+              **Aim for about 35% of your daily calories from this zone.**
+          - { type: image, asset: lesson_zone2_plate }
+          - type: paragraph
+            text: >-
+              These are the everyday, nourishing foods that form the backbone of healthy eating.
+          - type: paragraph
+            text: >-
+              They keep you full, fuel your body, and still give you room for variety.
+          - type: paragraph
+            text: >-
+              Select from **whole grains, lower-fat proteins, starchy vegetables, legumes (peas and beans), and some non-fried, non-vegetarian foods** (if you eat non-veg).
+          - type: accordion
+            title: A few examples of Zone 2 foods
+            provenance: authored
+            children:
+            - type: bulleted_list
+              items: [Cooked rice and whole-grain cereals, "Dal, beans and chickpeas", "Potatoes, corn and peas", Low-fat milk and curd, Grilled chicken or fish]
+
+        - type: content
+          cta: ZONE 3 IS NOT OFF LIMIT
+          blocks:
+          - type: heading
+            text: >-
+              Zone-3 (Medium CD)
+          - type: paragraph
+            text: >-
+              **Aim for 30% of the calories from this zone.**
+          - { type: image, asset: lesson_zone3_plate }
+          - type: paragraph
+            text: >-
+              **When you start your journey, most of your calories will likely come from Zone 3 & 4.** Everyone overshoots at first. Balance comes with time, so be patient.
+          - type: paragraph
+            text: >-
+              But don't worry! It's not only you. *Everyone in this journey were in the same phase when they started. But over time, they learned to balance. You'll learn it too.*
+          - type: paragraph
+            text: >-
+              To make you more mindful of food items in Zone 3, let us give you a quick list.
+          - type: accordion
+            title: A few examples of Zone 3 foods
+            provenance: authored
+            children:
+            - type: bulleted_list
+              items: [Chapati and tortilla, Meats and high-fat mixed dishes, Salad dressings, Some snack foods]
+
+        - type: content
+          cta: ZONE 4 → EAT MINDFULLY
+          blocks:
+          - type: heading
+            text: >-
+              Zone-4 (Highest CD)
+          - type: paragraph
+            text: >-
+              **Aim to have 10% (or lesser) calories from Zone 4.**
+          - { type: image, asset: lesson_zone4_plate }
+          - type: paragraph
+            text: >-
+              Limit your choices and portions from Zone 4, but don't cut them out altogether.
+          - type: paragraph
+            text: >-
+              Research suggests that ==restricting high-CD foods or just thinking to give them up can make you want them more==.
+          - type: paragraph
+            text: >-
+              Remember, no food is off the table. Treats are fine—in moderation. Tomorrow, you'll learn a keystone habit that helps manage portions without feeling deprived.
+          - type: paragraph
+            text: >-
+              Note: Healthy foods like nuts and seeds also fall under Zone 4. But that doesn't mean that they are unhealthy. It just means that you need to have them in moderation. Don't snack on them mindlessly.
+          - type: accordion
+            title: A few examples of Zone 4 foods
+            provenance: authored
+            children:
+            - type: bulleted_list
+              items: [Chips and crackers, Chocolate candies and cookies, "Nuts, seeds and butter", Full-fat condiments]
+
+        - type: content
+          cta: DONE
+          blocks:
+          - { type: image, asset: lesson_dominoes }
+          - type: paragraph
+            text: >-
+              Well, what you just learned in **less than 5 minutes took just more than 50 days to research and build** :)
+          - type: paragraph
+            text: >-
+              *Was it a lot to take at once?*
+          - type: paragraph
+            text: >-
+              Probably.
+          - type: paragraph
+            text: >-
+              If you found it a bit overwhelming, go back and go through it again just once.
+          - type: paragraph
+            text: >-
+              And it's okay if you still don't get it completely.
+          - type: paragraph
+            text: >-
+              As you move ahead in this journey, you'll get very familiar with food zones.
+          - type: paragraph
+            text: >-
+              Next, we'll address some of the thoughts that may be coming to your mind right now.
+          - type: paragraph
+            text: >-
+              *A little secret: we can read your mind :)*
+
+      - key: no_zone_is_off_limits
+        title: No zone is off-limits
+        provenance: placeholder
+        summary: >-
+          Every zone has a place on your plate — the goal is balance, not banning foods.
+      - key: stay_in_range
+        title: Stay in range
+        provenance: placeholder
+        summary: >-
+          Aim to keep each zone close to its suggested share of your daily calories.
+      - key: get_your_weighing_scale_ready
+        title: Get your weighing scale ready
+        provenance: placeholder
+        summary: >-
+          Weighing in regularly helps you see trends instead of daily ups and downs.
+      - key: add_to_your_mini_goals
+        title: Add to your mini goals
+        provenance: placeholder
+        summary: >-
+          Add one zone-based mini goal, like one extra Zone 1 food at dinner.
+
+    # ================= NODE 3 =================
+    - key: beginner_day_3
+      type: lesson
+      title: Day 3
+      icon: node_mindful_eating
+      lessons:
+
+      - key: keystone_habit_3_mindful_eating
+        title: "Keystone Habit #3: Introduction to Mindful Eating"
+        provenance: video 101-118
+        notes: "the top of the last page may contain an image that is scrolled past in the video"
+        completion:
+          headline: You have won the day 😎
+          message: Rewatching programs can reignite your motivation and keep you on track.
+        pages:
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              We all know the struggle: *Wanting to enjoy our food without eating a lot of it.*
+          - type: paragraph
+            text: >-
+              ==Finding a balance between our taste buds and portion size can be a challenging task.==
+          - type: paragraph
+            text: >-
+              But you know what?
+          - type: paragraph
+            text: >-
+              It has a lot to do with your mind.
+          - type: paragraph
+            text: >-
+              *How?*
+          - type: paragraph
+            text: >-
+              You'll know soon.
+          - type: paragraph
+            text: >-
+              But before that, here's a quick question for you: *How much time do you think people usually spend thinking about the past or the future?*
+          - type: paragraph
+            text: >-
+              Take a guess.
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: 1% }
+            - { label: 10% }
+            - { label: 26% }
+            - { label: 32% }
+            - { label: 47%, correct: true }
+            explanation: >-
+              That's almost half of the present time! Just imagine how much of the present you are missing out on.
+
+        - type: content
+          cta: THAT'S HUGE!
+          blocks:
+          - { type: image, asset: lesson_mind_wandering }
+          - type: paragraph
+            text: >-
+              After years of research, scientists claim that ==our minds wander half of the time==.
+          - type: paragraph
+            text: >-
+              In fact, a Harvard study found that our minds wander **47%** of the time
+          - type: paragraph
+            text: >-
+              Take a moment to digest this fact!
+
+        - type: content
+          cta: I GET IT
+          blocks:
+          - { type: image, asset: lesson_distracted_eating }
+          - type: paragraph
+            text: >-
+              The mind especially wanders while we are eating, because eating is an automatic behaviour.
+          - type: paragraph
+            text: >-
+              Psychologists define ==automatic behaviour as actions that don't require much focus and happen without conscious effort.==
+          - type: paragraph
+            text: >-
+              Think about it - *When was the last time you enjoyed a quiet, peaceful meal without interruption?*
+          - type: paragraph
+            text: >-
+              If you can't remember, you're not alone.
+          - type: paragraph
+            text: >-
+              Most of us are distracted while we are eating.
+          - type: bulleted_list
+            items: [Some are glued to their phones, Some are lost in thought, Others are already planning their next task at work]
+          - type: paragraph
+            text: >-
+              But why does this even matter?
+
+        - type: content
+          cta: TELL ME MORE
+          blocks:
+          - { type: image, asset: lesson_distracted_eating }
+          - type: paragraph
+            text: >-
+              ==When we eat without paying attention, we usually end up overeating==. You'll soon see why this happens.
+          - type: paragraph
+            text: >-
+              *And the result?*
+          - type: paragraph
+            text: >-
+              Those extra calories get stored as fat and lead to weight gain.
+          - type: paragraph
+            text: >-
+              But here's the good news:
+          - type: paragraph
+            text: >-
+              By **simply changing *how* we eat, we can naturally avoid overeating**. And that too without starving or feeling restricted.
+          - type: paragraph
+            text: >-
+              That's where the third keystone habit comes in: **Eat Mindfully**
+
+        - type: content
+          cta: I'D LOVE THAT
+          blocks:
+          - type: paragraph
+            text: >-
+              Research shows that people who eat mindfully:
+          - type: bulleted_list
+            items: [Lose more weight, Keep the weight off in the long run, Develop healthier eating habits, Manage their cravings better]
+          - { type: image, asset: lesson_testimonial_saravanan }
+          - type: paragraph
+            text: >-
+              Whatever your food struggle is — ==**stress eating, emotional eating, binge eating, portion control, sugary food cravings, salty food cravings, or food triggers — mindful eating is almost certain to help.**==
+          - type: paragraph
+            text: >-
+              It slows you down and increases your self-awareness.
+          - type: paragraph
+            text: >-
+              In the next 2-3 days, you'll learn how to incorporate mindful eating in your life (even when you are busy).
+
+      - key: meet_your_fullness_center
+        title: Meet your fullness center
+        provenance: placeholder
+        summary: >-
+          Your fullness centre tells you when your stomach has had enough — if you slow down enough to listen.
+      - key: lets_try_mindful_eating_now
+        title: Let's try mindful eating now
+        provenance: placeholder
+        summary: >-
+          For your next meal, put the phone away and notice the colour, smell and taste of each bite.
+      - key: divide_and_conquer
+        title: Divide and Conquer
+        provenance: placeholder
+        summary: >-
+          Serve a smaller portion first and pause before taking more — it makes portions easier to manage.
+      - key: the_freedom_to_be_imperfect
+        title: The Freedom to Be Imperfect
+        provenance: placeholder
+        summary: >-
+          One off-track meal doesn't undo your progress. Just make the next choice a mindful one.
+
+    # ================= NODE 4 =================
+    - key: beginner_day_4
+      type: lesson
+      title: Day 4
+      icon: node_flavour
+      lessons:
+
+      - key: meet_your_flavour_centre
+        title: Meet your flavour centre
+        provenance: video 124-138
+        corrections: ["'These two will help you' -> 'These three will help you' (three skills are listed)"]
+        completion:
+          headline: You have won the day 😎
+          message: You just enhanced your ability to apply what you've learned and see better results in your weight loss journey.
+        pages:
+        - type: content
+          cta: I GET THAT
+          blocks:
+          - { type: image, asset: lesson_flavour_dessert }
+          - type: paragraph
+            text: >-
+              *{{user.name}}, have you noticed that when you eat your favourite food, you often end up eating more than usual?*
+          - type: paragraph
+            text: >-
+              *Or how you can still enjoy your favourite food (like dessert) at the end of a meal, even if you've already eaten enough?*
+          - type: paragraph
+            text: >-
+              That's because your body has two "centres"
+          - type: bulleted_list
+            items:
+            - >-
+              **Fullness Centre**: tells you when your stomach is physically *full*
+            - >-
+              **Flavour Centre**: tells you when your taste buds feel satisfied
+          - type: paragraph
+            text: >-
+              Even if you're full, you'll still **crave something tasty if your flavour centre isn't satisfied**.
+          - type: paragraph
+            text: >-
+              You need to satisfy both, or else you won't stop eating.
+
+        - type: content
+          cta: UNDERSTOOD
+          blocks:
+          - { type: image, asset: lesson_flavour_plate }
+          - type: paragraph
+            text: >-
+              Most of the weight loss programs completely ignore the flavour centre.
+          - type: paragraph
+            text: >-
+              They focus only on the fullness centre.
+          - type: paragraph
+            text: >-
+              But not Health Tick. We believe that flavours matter a lot.
+          - type: paragraph
+            text: >-
+              You can't spend life eating bland food.
+          - type: paragraph
+            text: >-
+              You've got to love what you are eating.
+          - type: paragraph
+            text: >-
+              *Why?*
+          - type: paragraph
+            text: >-
+              Because **unless your flavour centre feels satisfied, you'll keep wanting more**.
+          - type: paragraph
+            text: >-
+              That's why we don't ask you to give up your favourite foods completely. **Instead, we recommend that you eat it mindfully.**
+          - type: paragraph
+            text: >-
+              When you slow down and truly taste your food, your flavour centre feels satisfied — so you don't keep craving for *just one more bite*.
+
+        - type: content
+          cta: LOOKING FORWARD TO IT
+          blocks:
+          - { type: image, asset: lesson_flavour_smile }
+          - type: paragraph
+            text: >-
+              Last time, we discussed how the **Divide and Conquer** skill can help you manage your portions effectively.
+          - type: paragraph
+            text: >-
+              Today, it's time to learn three more "how to eat" skills:
+          - type: numbered_list
+            items: [Slowing down while you eat, Stopping when you feel about 80% full, Eat-Break-Eat]
+          - type: paragraph
+            text: >-
+              These three will help you enjoy your meals and naturally eat the right amount — without starving or feeling restricted.
+          - type: paragraph
+            text: >-
+              So, ready to learn about them?
+
+        - type: question
+          cta: DONE
+          blocks:
+          - type: paragraph
+            text: >-
+              Before that, we have a question for you:
+          - type: paragraph
+            text: >-
+              After a meal, what really decides whether you feel satisfied or not?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: Fullness Centre }
+            - { label: Flavour Centre }
+            - { label: Both of the above, correct: true }
+            explanation: >-
+              Satisfaction after eating doesn't just come from a full stomach. Your **fullness centre** tells you when your stomach has had enough, but your **flavour centre** makes sure your taste buds feel happy too. Unless *both* are satisfied, you'll still feel like eating more.
+
+      - key: slow_down
+        title: Slow down
+        provenance: placeholder
+        summary: >-
+          Put your spoon down between bites. Eating slowly gives your fullness centre time to catch up.
+      - key: stop_when_80_percent_full
+        title: Stop when you're 80% full
+        provenance: placeholder
+        summary: >-
+          Stop when you feel comfortably satisfied, not stuffed. You can always eat again when you're hungry.
+      - key: eat_break_eat
+        title: Eat - Break - Eat
+        provenance: placeholder
+        summary: >-
+          Take a short pause midway through your meal and check in with your hunger before continuing.
+
+    # ================= NODE 5 =================
+    - key: beginner_day_5
+      type: lesson
+      title: Day 5
+      icon: node_procrastination
+      lessons:
+
+      - key: procrastination_for_health
+        title: Procrastination for health
+        provenance: video 143-172
+        corrections: ["'Next, we'll took at' -> 'Next, we'll look at'"]
+        completion:
+          headline: You have won the day 😎
+          message: You just understood all the important points.
+        pages:
+        - type: content
+          cta: SOUNDS RELATABLE
+          blocks:
+          - { type: image, asset: lesson_procrastination }
+          - type: paragraph
+            text: >-
+              {{user.name}}, does any of this sound familiar?
+          - type: paragraph
+            text: >-
+              *"I know I need to exercise, but I'm too tired today. I'll go for a walk tomorrow morning."*
+          - type: paragraph
+            text: >-
+              *"I was going to sleep early, but this TV series is too interesting. I'll go to bed early tomorrow."*
+          - type: paragraph
+            text: >-
+              *"I planned to do my HealthTick task in the morning, but I didn't feel like doing it. I'll start tomorrow."*
+          - type: paragraph
+            text: >-
+              If yes, you're not alone.
+          - type: paragraph
+            text: >-
+              We all procrastinate, and it's just so easy to procrastinate when it comes to our health!
+
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              So, how do we stop procrastinating?
+          - type: paragraph
+            text: >-
+              ==**Well, the first step is to understand why we do it in the first place.**==
+          - type: paragraph
+            text: >-
+              Think about it and answer: Why do you procrastinate when it comes to your health? (Select all that apply)
+          question:
+            response: multiple_choice
+            graded: false
+            min_selections: 1
+            options:
+            - I prefer activities with immediate rewards
+            - I am afraid of failing to achieve my health goals, so I never start
+            - I don't have enough time in my day.
+            - I aim for perfection and when that doesn't happen, I give up
+            - I set big and overwhelming goals for myself
+            - My friends and family don't prioritise health
+            - My motivation is short lived. When I get demotivated, I give up
+
+        - type: content
+          cta: NEXT
+          blocks:
+          - { type: image, asset: lesson_clapping_hands }
+          - type: paragraph
+            text: >-
+              ==**Recognizing these reasons is the first step toward overcoming them.**== We appreciate your honesty in identifying the problem.
+          - type: paragraph
+            text: >-
+              So, how do we deal with all this?
+          - type: paragraph
+            text: >-
+              Well, we've got you covered!
+          - type: paragraph
+            text: >-
+              Today, you'll learn two effective ways to tackle procrastination.
+          - type: numbered_list
+            items:
+            - >-
+              ==**Breaking your big goals into smaller goals**==
+            - >-
+              ==**Staying accountable**==
+
+        - type: content
+          cta: I AGREE
+          blocks:
+          - { type: image, asset: lesson_mountain_goals }
+          - type: heading
+            text: >-
+              1) Break your big goal into smaller goals
+          - type: paragraph
+            text: >-
+              {{user.name}}, imagine that you've to climb a mountain. If you only focus on reaching the peak, it can feel overwhelming and you might delay starting.
+          - type: paragraph
+            text: >-
+              ==But if you break it into smaller, manageable hikes, each step becomes achievable and you're more likely to keep going.==
+          - type: paragraph
+            text: >-
+              **Small goals are like exactly these small hikes.**
+
+        - type: content
+          cta: SMALL GOALS MAKE BIG DIFFERENCE
+          blocks:
+          - type: paragraph
+            text: >-
+              The point is -
+          - type: callout
+            asset: callout_small_steps
+            text: >-
+              No matter how big and ambitious your goal is, **breaking it down into smaller goals** makes it much **easier to achieve**.
+          - type: paragraph
+            text: >-
+              *Want to be physically active?* Start with a 5 minute walk around your block.
+          - type: paragraph
+            text: >-
+              *Want to eat healthier?* Begin by adding one zone 1 food to your dinner.
+          - type: paragraph
+            text: >-
+              *Looking to meditate daily?* Try closing your eyes and taking five deep breaths.
+          - type: paragraph
+            text: >-
+              *Hoping to drink more water?* Begin by surrounding yourself with water.
+          - type: paragraph
+            text: >-
+              ==**Each small step you take brings you closer to your big goal.**==
+
+        - type: content
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              All successful HealthTick users who lost weight and kept it off had one thing in common:
+          - type: callout
+            asset: callout_ten_minutes
+            text: >-
+              They committed to **completing their daily task at HealthTick** which takes just **10 mins** each day!
+          - type: paragraph
+            text: >-
+              Even on days when they couldn't do anything else, they made sure to stick with those 10 minutes.
+          - type: paragraph
+            text: >-
+              ==**And eventually, their consistent efforts paid off, helping them achieve all their health goals.**==
+
+        - type: question
+          cta: DONE
+          blocks:
+          - { type: image, asset: lesson_target }
+          - type: paragraph
+            text: >-
+              So, think of a health goal that you want to achieve but have been procrastinating for a while now.
+          - type: paragraph
+            text: >-
+              *(Write it below)*
+          question:
+            response: free_text
+            graded: false
+            answer_key: big_goal
+            min_length: 1
+            max_length: 300
+            validation_message: Writing your thoughts will help you remember and build habits. So, please write your thoughts.
+
+        - type: question
+          cta: NEXT
+          blocks:
+          - { type: image, asset: lesson_target }
+          - type: paragraph
+            text: >-
+              Alright.
+          - type: paragraph
+            text: >-
+              *What's the smallest step you can take to achieve it?*
+          question:
+            response: free_text
+            graded: false
+            answer_key: small_goal
+            min_length: 1
+            max_length: 300
+            validation_message: Writing your thoughts will help you remember and build habits. So, please write your thoughts.
+
+        - type: content
+          cta: SOUNDS GOOD
+          blocks:
+          - type: paragraph
+            text: >-
+              ==**Your big goal**== : {{answer.big_goal}}
+          - type: paragraph
+            text: >-
+              ==**Your small goal**== : {{answer.small_goal}}
+          - type: paragraph
+            text: >-
+              Well, that's exactly where you need to start.
+          - type: paragraph
+            text: >-
+              So, as you move forward, ==**whenever you feel like procrastinating, just break your goal into smaller goals and take just the first step.**==
+          - type: paragraph
+            text: >-
+              And it will help you achieve your end goal.
+          - type: paragraph
+            text: >-
+              Next, we'll look at the second way of dealing with procrastination - ==**Staying accountable**==
+
+      - key: stay_accountable
+        title: Stay accountable
+        provenance: placeholder
+        summary: >-
+          Tell someone about your small goal, or check in with yourself daily — accountability keeps you going.
+      - key: you_dont_need_to_be_perfect
+        title: You don't need to be perfect
+        provenance: placeholder
+        summary: >-
+          Progress beats perfection. Missing a day is fine — just don't miss two in a row.
+
+    # ================= NODE 6 =================
+    - key: beginner_day_6
+      type: lesson
+      title: Day 6
+      icon: node_visual_hunger
+      lessons:
+
+      - key: meet_visual_hunger
+        title: Meet visual hunger
+        provenance: video 180-192
+        corrections: ["original 'Yash, imagine' followed by two emoji -> kept as plain text"]
+        completion:
+          headline: You have won the day 😎
+          message: Revisiting programs regularly help move information from short-term to long-term memory.
+        pages:
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              {{user.name}}, let's see if you remember a concept that we discussed earlier.
+          - type: paragraph
+            text: >-
+              If you see more water, then you _.
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: A. Can handle your food cravings }
+            - { label: B. Drink more water }
+            - { label: C. It makes no difference }
+            - { label: D. Both A and B, correct: true }
+            explanation: |-
+              If you see more water, you'll drink more water.
+
+              And when you drink more water, then food cravings which happen because of thirst get suppressed naturally.
+
+        - type: content
+          cta: NEXT
+          blocks:
+          - { type: image, asset: lesson_cookie_temptation }
+          - type: paragraph
+            text: >-
+              {{user.name}}, imagine.
+          - type: paragraph
+            text: >-
+              You walk into your kitchen to drink water.
+          - type: paragraph
+            text: >-
+              While filling up your glass, you see a packet of biscuits lying nearby.
+          - type: paragraph
+            text: >-
+              You are not hungry at all.
+          - type: paragraph
+            text: >-
+              But ==**after seeing them, you get a strong urge/temptation to eat them.**==
+          - type: paragraph
+            text: >-
+              Next, you find yourself eating them.
+          - type: paragraph
+            text: >-
+              Has it ever happened with you?
+
+        - type: content
+          cta: YES, FOR SURE
+          blocks:
+          - type: paragraph
+            text: >-
+              If yes - You are not alone!
+          - type: paragraph
+            text: >-
+              Meet visual hunger.
+          - type: callout
+            asset: callout_eyes
+            text: >-
+              You **see tasty food**, and your brain signals a **desire to eat** it - even if you are not at hunger level 3.
+          - type: paragraph
+            text: >-
+              It's just how our brain works.
+          - type: paragraph
+            text: >-
+              Remember - *as you see more water, you drink more water?*
+          - type: paragraph
+            text: >-
+              The same happens with food as well.
+          - type: paragraph
+            text: >-
+              Today, let's learn how to deal with visual hunger.
+          - type: paragraph
+            text: >-
+              Shall we?
+
+      - key: restructure_your_environment
+        title: Restructure your environment
+        provenance: placeholder
+        summary: >-
+          Keep tempting foods out of sight and healthy options where you can see them.
+      - key: lets_dive_deeper
+        title: Let's dive deeper
+        provenance: placeholder
+        summary: >-
+          Visual hunger is triggered by what you see — at home, at work and on your phone.
+      - key: todays_challenge
+        title: Today's challenge
+        provenance: placeholder
+        summary: >-
+          Move one tempting snack out of sight today and notice whether you think about it less.
+
+    # ================= CHECKPOINT =================
+    - key: beginner_checkpoint
+      type: checkpoint
+      title: Checkpoint
+      icon: node_checkpoint_arch
+      lessons:
+      - key: beginner_checkpoint_quiz
+        title: "Checkpoint: Let's recall those knowledge"
+        provenance: "page 1 video 196-199; weigh-in question from first reference video; recall questions authored"
+        corrections: ["'completed the level-2 of Beginner status' -> 'level-1' to match the LEVEL-1 card"]
+        completion:
+          headline: You have won the day 😎
+          message: You've completed the Beginner status. The Insider status is now unlocked!
+        pages:
+        - type: content
+          cta: LET'S START
+          blocks:
+          - type: paragraph
+            text: >-
+              Well done, {{user.name}}! You have completed the level-1 of Beginner status. You have learnt a very basic of "Psychology of Weight Loss".
+          - type: paragraph
+            text: >-
+              Now, before we move to the next status, it's time to pause and test your knowledge.
+          - type: paragraph
+            text: >-
+              Alright, shall we begin?
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              How frequently should you weight in?
+          question:
+            response: single_choice
+            graded: false
+            options: [Everyday, Once a week., Once a month, It's a nightmare]
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              What is calorie density?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: The total calories I eat in one day }
+            - { label: The number of calories in a food per gram of its weight, correct: true }
+            - { label: How quickly my body burns calories after eating }
+            explanation: >-
+              Calorie density tells you how many calories are packed into each gram of a food.
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              Which food zone is the "free zone"?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: Zone 1, correct: true }
+            - { label: Zone 2 }
+            - { label: Zone 3 }
+            - { label: Zone 4 }
+            explanation: >-
+              Zone 1 foods are high in water and fibre and low in calories, so you're free to eat as much as you want.
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              What is visual hunger?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: Feeling hungry because you skipped a meal }
+            - { label: "Wanting to eat because you see tasty food, even when you're not hungry", correct: true }
+            - { label: Feeling full just by looking at food }
+            explanation: >-
+              Seeing tasty food makes your brain signal a desire to eat — even if you're not at hunger level 3.
+        - type: content
+          cta: FINISH
+          blocks:
+          - type: paragraph
+            text: >-
+              ==**Great job, {{user.name}}!**== You've revised the most important ideas from the Beginner status.
+          - type: paragraph
+            text: >-
+              Next up: **Insider** — where you'll learn to handle your food triggers.
+
+# ---------------------------------------------------------------------
+- key: insider
+  title: Insider
+  card_background_color: "#DFECFF"
+  card_shadow_color: "#8CB3D8"
+  card_text_color: "#1C1C1C"
+  levels:
+  - key: insider_l2
+    label: LEVEL-2
+    title: Handle your food triggers
+    illustration: card_insider_illustration
+    nodes:
+
+    - key: insider_day_1
+      type: lesson
+      title: Day 7
+      icon: node_insider_triggers
+      lessons:
+      - key: know_your_food_triggers
+        title: Know your food triggers
+        provenance: authored
+        completion:
+          headline: You have won the day 😎
+          message: Knowing your triggers is the first step to handling them.
+        pages:
+        - type: content
+          cta: TELL ME MORE
+          blocks:
+          - type: heading
+            text: >-
+              What is a food trigger?
+          - type: paragraph
+            text: >-
+              {{user.name}}, a food trigger is anything that makes you want to eat when you're not truly hungry.
+          - type: paragraph
+            text: >-
+              It can be a **place**, a **person**, a **feeling** or even a **time of day**.
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              Which of these make you want to eat even when you're not hungry? (Select all that apply)
+          question:
+            response: multiple_choice
+            graded: false
+            min_selections: 1
+            options: [Stress at work, Watching TV, Social gatherings, Late nights, Seeing food around me]
+        - type: content
+          cta: GOT IT
+          blocks:
+          - type: paragraph
+            text: >-
+              ==Just noticing a trigger already weakens it.==
+          - type: paragraph
+            text: >-
+              Over the next few days, you'll learn simple ways to respond to each one.
+
+    - key: insider_day_2
+      type: lesson
+      title: Day 8
+      icon: node_insider_emotions
+      lessons:
+      - key: emotional_vs_physical_hunger
+        title: Emotional vs physical hunger
+        provenance: authored
+        completion:
+          headline: You have won the day 😎
+          message: You just enhanced your ability to apply what you've learned and see better results in your weight loss journey.
+        pages:
+        - type: content
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              **Physical hunger** builds slowly and can be satisfied by many foods.
+          - type: paragraph
+            text: >-
+              **Emotional hunger** comes suddenly and usually wants one specific comfort food.
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              You suddenly crave chocolate right after a stressful call. What kind of hunger is this most likely?
+          question:
+            response: single_choice
+            graded: true
+            options:
+            - { label: Physical hunger }
+            - { label: Emotional hunger, correct: true }
+            - { label: Visual hunger }
+            explanation: >-
+              A sudden craving for one specific comfort food right after a stressful moment is a classic sign of emotional hunger.
+        - type: content
+          cta: DONE
+          blocks:
+          - type: paragraph
+            text: >-
+              Next time a craving hits, pause for a minute and ask: *"Am I hungry, or am I feeling something?"*
+
+    - key: insider_day_3
+      type: lesson
+      title: Day 9
+      icon: node_insider_plan
+      lessons:
+      - key: your_trigger_plan
+        title: Your trigger plan
+        provenance: authored
+        completion:
+          headline: You have won the day 😎
+          message: You just understood all the important points.
+        pages:
+        - type: question
+          cta: NEXT
+          blocks:
+          - type: paragraph
+            text: >-
+              Write down the one trigger that affects you the most.
+          question:
+            response: free_text
+            graded: false
+            answer_key: main_trigger
+            min_length: 1
+            max_length: 300
+            validation_message: Writing your thoughts will help you remember and build habits. So, please write your thoughts.
+        - type: content
+          cta: SOUNDS GOOD
+          blocks:
+          - type: paragraph
+            text: >-
+              ==**Your main trigger**== : {{answer.main_trigger}}
+          - type: paragraph
+            text: >-
+              When it shows up, try this: **pause**, **drink a glass of water**, and **wait 10 minutes** before deciding to eat.
+
+# ---------------------------------------------------------------------
+# Placeholder lesson template (applied to every lesson with
+# provenance: placeholder). The seeder expands it into one content page:
+#   - heading: <lesson title>
+#   - paragraph: <summary>
+#   - cta: GOT IT
+#   completion: headline 'You have won the day 😎',
+#               message 'You just understood all the important points.'
+# ---------------------------------------------------------------------
+placeholder_template:
+  cta: GOT IT
+  completion:
+    headline: You have won the day 😎
+    message: You just understood all the important points.
