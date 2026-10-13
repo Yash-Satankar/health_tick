@@ -83,7 +83,7 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 | 8 | Home, Journey (layout engine first, with tests), Search | ✅ done |
 | 9 | Lesson player (blocks, questions, feedback, exit sheet, menu, completion) | ✅ done |
 | 10 | Content sync, lifecycle refresh, final error states | ✅ done |
-| 11 | Full test run, fixes, E2E if a device/emulator is available | ⏳ |
+| 11 | Full test run, fixes, E2E if a device/emulator is available | ✅ done (emulator E2E passed; physical phone pending) |
 | 12 | Docs + worklog completion, release APK, final report | ⏳ |
 
 ## Manual verification checklist (SPEC §11.5)

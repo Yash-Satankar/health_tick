@@ -717,3 +717,32 @@ The user then asked Claude Code to pause the emulator testing, commit the work i
 - `flutter test` → `00:17 +145: All tests passed!`
 
 **Open issues.** Unchanged from the previous entry: images not rendering on the emulator, and avatar contrast. Step 11 resumes now.
+
+---
+
+## 2026-10-13 — Session 2: CORRECTION to "Images don't render on the emulator" + Step 11 completed
+
+**Correction.** The open issue "images don't render on the emulator", recorded two entries above, was a **misdiagnosis by Claude Code**.
+- The first Journey screenshot was taken at 10:54, before the cold debug build had finished downloading the images. The cache files and the
+  cache database (`files/libCachedImageData.db`) are timestamped 10:55–10:56.
+- The claim that "the sqflite database was never created" came from looking in `databases/`, but flutter_cache_manager keeps it in the
+  application-support directory.
+- After relaunching and waiting, the card illustration, node icons and the bootstrap `lockedNode` asset all render. No code change was needed.
+
+**Other fixes (Claude Code).**
+- **Avatar contrast:** the Home avatar initial was dark on a dark circle. `CircleAvatar.foregroundColor` is now `AppColors.textPrimary`.
+- **Launch screen:** the white Flutter launch screen (template) clashed with the dark-only app. `launch_background.xml` (both variants) and the
+  `NormalTheme` window background are now black.
+
+**Step 11 checks actually run.**
+- **Emulator** (`Medium_Phone`, restarted after it disappeared under memory pressure): built and installed the debug APK with the fill change.
+  - After load, the Journey shows the fill running into the available Day 2 node and stopping there, with locked sections dark.
+  - A mid-animation frame could not be captured: `adb screencap` takes about 1 s and there's no ffmpeg for screen recordings. The partial-fill state is covered by the widget test instead.
+- **Real time (AC2):** with the Journey open, `npm run demo:set-node-count -- --level insider_l2 --count 5` finished at 13:56:58. By 13:57:00 the app
+  showed "Your journey was updated" and had re-fetched `/journey`, with no user action. The node count was reverted to 3 afterwards.
+- **Backend:** `npx tsc --noEmit` OK; `npx eslint .` clean; `npx vitest run` → `Test Files  14 passed (14)` / `Tests  136 passed (136)`;
+  `npm run content:validate` → "Content OK: 2 statuses, 30 lessons (19 placeholders), 74 pages, 49 assets."
+- **Flutter:** `dart format --set-exit-if-changed` → 0; `flutter analyze` → "No issues found!"; `flutter test` → `00:28 +145: All tests passed!`
+- **E2E:** passed earlier this session on the emulator (`01:54 +1: All tests passed!`; see the step 11 entry above).
+
+**Open issues.** None blocking. Still to do: physical-phone install via `adb reverse` (needs the user's device) and the step 12 docs/APK.

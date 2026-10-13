@@ -122,6 +122,7 @@ class _Header extends StatelessWidget {
           child: CircleAvatar(
             radius: 22,
             backgroundColor: AppColors.surface,
+            foregroundColor: AppColors.textPrimary,
             child: Text(initial, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
           ),
         ),
