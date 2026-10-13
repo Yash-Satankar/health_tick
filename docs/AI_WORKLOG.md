@@ -268,3 +268,91 @@ for step 5/6:
   - progress:reset.
 
 **Open issues.** The SSE "exactly one event" part of the `demo:set-node-count` test needs the events module (step 6).
+
+---
+
+## 2026-10-13 — Session 1, Step 6: API modules (app-config, home, journey, lessons, attempts, search, saved, feedback, events)
+
+**Objective.** SPEC §13 step 6: every endpoint in SPEC §6.2 with unit and integration tests.
+
+**What Claude Code did.**
+- **Shared:**
+  - `middleware/userContext` (X-User-Id → 401 `USER_NOT_IDENTIFIED` for missing, malformed or unknown ids).
+  - `lib/time.ts` (local dates in `APP_TIMEZONE`, streak).
+  - `lib/rng.ts` (injectable RNG, weighted pick).
+  - `container.ts`, which wires repositories → services → controllers → routes.
+- **journey:**
+  - `journey.rules.ts`: pure §4.2/4.3/4.6/4.10 rules.
+  - The repository loads the published tree with every ancestor published.
+  - `JourneySnapshot` (tree + states + progress) is reused by home, lessons, search, saved, feedback and attempts.
+  - `GET /journey` sends ETag `W/"c{version}-p{stamp}"` and returns 304 on `If-None-Match`.
+- **app-config:** `GET /bootstrap` (copy, ui assets, active feedback reasons, user).
+- **home:** `GET /home` (streak, today's task).
+- **lessons:** `GET /lessons/:id`. 404 if not visible, 403 if locked. Options are selected **without** `is_correct`. Accordion children are nested.
+- **attempts:**
+  - Start / answer / complete / abandon, with pure `attempts.grading.ts` (§4.7) and the points rule.
+  - Answer locks the attempt row, upserts the answer, replaces the options and picks feedback with the injected RNG.
+  - Complete runs in one transaction:
+    - attempt `FOR UPDATE`, then the user row `FOR UPDATE`, using one `now()` timestamp throughout;
+    - idempotent replay of a completed attempt;
+    - 409 `CONTENT_CHANGED` vs 422 `INCOMPLETE_ATTEMPT` by content version;
+    - ledger row, total, progress upsert;
+    - node completion and `unlockedNodeId`.
+- **search:**
+  - Full-text (`websearch_to_tsquery`) OR `word_similarity` ≥ 0.5 OR a case-insensitive title substring (LIKE wildcards escaped).
+  - Score is `ts_rank + word_similarity`; journey sort uses global order.
+- **saved:** idempotent PUT/DELETE.
+- **feedback:** `FEEDBACK_INVALID` rules.
+- **events:**
+  - `db/listen.ts` (`ContentListener`): one shared LISTEN connection, reconnecting with 1/2/5/10/30 s backoff and re-reading the version after a reconnect.
+  - It **coalesces** the NOTIFY burst of one transaction (150 ms window) into one `change`.
+  - `EventsHub` sends `retry: 5000` + `hello`, `content_changed`, and a shared `ping` heartbeat.
+- `server.ts` graceful shutdown, in SPEC §7.5 order: stop accepting → end SSE streams → stop the listener → destroy the pool.
+
+**Decisions (Claude Code; details the SPEC leaves open).**
+- **`ui_assets`:** the YAML map has no schema table, so the seeder stores it as reserved `app_copy` keys `ui_asset.<name>`.
+  `/bootstrap` moves those into `assets` (camelCase: `lockedNode`, `completionMedal`) and leaves them out of `copy`.
+  The validator rejects YAML copy keys that use that prefix.
+- **ETag `userProgressStamp`** is `max(user_lesson_progress.last_completed_at)` in epoch ms, and the response sends `Cache-Control: private, no-cache`.
+- **Lesson `completedAt`** = `first_completed_at`. **Node `completedAt`** = `user_node_completions.completed_at`.
+- **Error choices for answers:**
+  - A page outside the attempt's lesson → 404 `NOT_FOUND`.
+  - Wrong body kind (text for a choice question or vice versa) → 422 `ANSWER_INVALID`.
+  - Duplicate option ids count once.
+  - Both or neither of `optionIds`/`text` → 400 `VALIDATION_ERROR` (Zod union of strict objects).
+- **Feedback errors:** an unknown reason, or a `pageId` not in the lesson → 422 `FEEDBACK_INVALID`.
+- **Idempotent complete replay** returns the stored points. `nodeCompleted` is recomputed by matching the node completion
+  timestamp to the attempt's `completed_at`, which is the same transaction timestamp.
+- **Feedback pool order** is by `key`, so the injected RNG gives deterministic results in tests.
+- **The SSE `/events` route also requires X-User-Id**, since SPEC §6.1 exempts only `/health` and `/static`. The Flutter client will send it.
+
+**Bugs found and fixed.**
+- `assetOrNull` didn't accept the nullable columns of a LEFT JOIN (TS error); widened its parameter type.
+- A test expectation used the wrong headline: the pool is ordered by key, so rng=0 picks `incorrect_dont_worry`. Fixed the test to match the documented ordering.
+- First manual SSE check showed 1 of 2 events, because the curl stream ended (12 s timeout) before the second script. Rerunning with a 40 s window showed both events.
+- The dev DB was seeded before the `ui_asset.*` change; reseeding inserted the 2 rows (`app_copy=2`).
+
+**Commands and tests actually run.**
+- `npx tsc --noEmit` OK. `npx eslint .` clean.
+- `npx vitest run` twice → `Test Files  14 passed (14)` / `Tests  136 passed (136)` both times. Integration coverage:
+  - Auth 401 ×3.
+  - bootstrap.
+  - home: fresh, after completion, all done.
+  - journey: structure, fresh states, ETag/304, ETag change, node unlock.
+  - lessons: payload, no `is_correct`/`isCorrect`/`"correct"` in the JSON, all block types, 403/404/400, unpublished parent hides children.
+  - search: "procrast", both sorts, limit, validation, wildcard escaping, unpublished hidden.
+  - attempts:
+    - wrong/correct feedback, RNG rotation, ungraded and re-answer;
+    - 422 for another question's option, wrong body kind and free-text rules; 400 for body shape; 404 for a foreign attempt or page;
+    - 422 `INCOMPLETE_ATTEMPT`, 409 `CONTENT_CHANGED` with a question added mid-attempt;
+    - first vs replay points; **2 concurrent completes → exactly one ledger row**;
+    - checkpoint unlocks Insider; abandon semantics.
+  - saved: idempotent.
+  - feedback: validation.
+  - SSE (real HTTP + LISTEN): retry/hello/content_changed, **set-node-count → exactly one event** plus the updated journey, ping, disconnect cleanup, 401.
+- Manual smoke test against the dev DB with `npx tsx src/server.ts`:
+  - `GET /home` and `/journey` return the seeded data. `GET /bootstrap` → contentVersion 226.
+  - A curl SSE stream while running `demo:set-node-count --count 5` then `--count 3` showed `hello {226}`,
+    `content_changed {228}`, `content_changed {230}`: exactly one event per script run.
+
+**Open issues.** None for the backend. The Flutter app starts in step 7.

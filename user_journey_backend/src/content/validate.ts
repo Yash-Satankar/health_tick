@@ -122,6 +122,13 @@ export function validateModel(model: ContentModel, manifest: Manifest, assetDir:
     references.push({ key: m.assetKey, path: `answer_feedback_messages.${i}.asset` }),
   );
 
+  // `ui_asset.*` copy keys are reserved for the ui_assets map (see admin/seed.ts).
+  for (const { key } of model.appCopy) {
+    if (key.startsWith('ui_asset.')) {
+      issues.push({ path: `app_copy.${key}`, message: 'the "ui_asset." prefix is reserved' });
+    }
+  }
+
   // ---- feedback pools ----
   for (const outcome of ['correct', 'incorrect'] as const) {
     if (!model.feedbackMessages.some((m) => m.outcome === outcome && m.isActive)) {

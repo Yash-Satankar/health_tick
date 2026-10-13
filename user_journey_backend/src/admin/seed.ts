@@ -8,6 +8,9 @@ import type { ContentBlock, ContentModel, ContentPage, ContentQuestion } from '.
 import type { Manifest } from '../content/schema.js';
 
 type AnyDb = Kysely<any>;
+
+/** Reserved app_copy key prefix holding the YAML `ui_assets` map (see /bootstrap). */
+export const UI_ASSET_COPY_PREFIX = 'ui_asset.';
 type Row = Record<string, unknown>;
 
 export interface SeedStats {
@@ -327,7 +330,13 @@ export async function seedContent(
     );
     const asset = (key: string | null) => (key ? assetIds.get(key)! : null);
 
-    await seeder.syncAppCopy(model.locale, model.appCopy);
+    // The schema has no table for the YAML `ui_assets` map, so it is stored as reserved
+    // `ui_asset.<name>` copy entries (value = media asset key) and read back by /bootstrap.
+    const uiAssetCopy = Object.entries(model.uiAssets).map(([name, key]) => ({
+      key: `${UI_ASSET_COPY_PREFIX}${name}`,
+      value: key,
+    }));
+    await seeder.syncAppCopy(model.locale, [...model.appCopy, ...uiAssetCopy]);
 
     const reasonCount = model.feedbackReasons.length;
     await seeder.syncKeyed(
