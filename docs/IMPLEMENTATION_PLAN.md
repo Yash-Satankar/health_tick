@@ -80,7 +80,7 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 | 5 | Reference pack copy, Fluent Emoji download + attribution, seeder, validator, reset/demo scripts, seed dev DB | ✅ done |
 | 6 | Modules: app-config, home, journey, lessons, attempts, search, saved, feedback, events (+ tests) | ✅ done |
 | 7 | Flutter scaffold, theme, core layers (network, errors, SSE, markup, routing, DI) | ✅ done |
-| 8 | Home, Journey (layout engine first, with tests), Search | ⏳ |
+| 8 | Home, Journey (layout engine first, with tests), Search | ✅ done |
 | 9 | Lesson player (blocks, questions, feedback, exit sheet, menu, completion) | ⏳ |
 | 10 | Content sync, lifecycle refresh, final error states | ⏳ |
 | 11 | Full test run, fixes, E2E if a device/emulator is available | ⏳ |

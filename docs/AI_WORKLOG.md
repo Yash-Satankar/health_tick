@@ -419,3 +419,88 @@ for step 5/6:
   - Bootstrap DTO, including a malformed payload; AppConfigCubit (bloc_test).
 
 **Open issues.** None.
+
+---
+
+## 2026-10-13 — Session 1, Step 8: Home, Journey (layout engine first), Search
+
+**Objective.** SPEC §13 step 8.
+
+**What Claude Code did.**
+- **Layout engine** (`journey/presentation/layout/journey_layout_engine.dart`, pure; written and tested first). SPEC §9.4 ratios:
+  - Node `0.26W`, ring `0.035W`; card `0.9W×0.46W`; rows `0.49W` apart.
+  - Centre row at `0.5W`, pair rows at `0.30W/0.72W`. A checkpoint takes its own centred row as a `0.39W×0.42W` arch, and the next card overlaps it by `0.12W`.
+  - Connectors (stroke `0.025W`):
+    - card→first node: straight vertical;
+    - centre→left / left→centre: a cubic S-curve with both control points at `x=c`, so `x(½)=0.08W`;
+    - left→right: straight;
+    - right→centre: a curve reaching `0.92W`.
+    - Completed colour if the END node is completed.
+  - Hit rects are at least 48 dp.
+- **Journey:**
+  - Domain entities; defensive parsing (unknown type → lesson, unknown state → locked); `popoverActionFor` (§4.6).
+  - Repository with ETag caching (`If-None-Match`, 304 → cached).
+  - `JourneyCubit` (freezed): `loading / failure / loaded{selectedNodeId, activity: idle|reloading|refreshing, transientError+errorId, scrollToTopId, pulseNodeId}`.
+    Actions: `load / reload / silentRefresh / selectNode / clearSelection / pulse`.
+  - Widgets:
+    - `JourneyPathView`: Stack of painter, cards and nodes, plus the popover and a barrier that closes it on an outside tap. The scroll height is extended so the popover fits; `Scrollable.ensureVisible` runs over 250 ms.
+    - `StatusCard`: API colours, 8 dp solid offset shadow, illustration on the left 40%.
+    - `JourneyNodeView`: ring drawn by Flutter, icon clipped to a circle, the bootstrap `lockedNode` asset for locked nodes, a green check badge, a 300 ms shake when locked, and a pulse.
+    - `NodePopover`: width `min(0.84W, 340)`, clamped; 12 dp pointer; 180 ms fade+scale; state icons; primary button; "Completed On d MMM yyyy".
+  - `JourneyPage`: app bar with back, title, outlined Reload/Search. Spinner, ErrorView+Retry, empty state, a reload overlay
+    (200 ms fade, copy title/subtitle, scroll to top on success), and transient-error snackbars. A checkpoint opens its lesson directly.
+    A locked tap shows the `journey.locked.message` snackbar.
+- `open_lesson.dart`: pushes `/lesson/:id`. On return it refreshes Home and Journey, reopens the node's popover (not for checkpoints),
+  and pulses `unlockedNodeId`.
+- **Home:** `HomeDto` (json_serializable) → `HomeData`, and `HomeCubit` (silent refresh keeps data).
+  `HomePage`: avatar initial, streak, health points, today's task + `JOURNEY ›`, task card (lesson, or all-done → Journey),
+  a skeleton, ErrorView+Retry, pull-to-refresh.
+- **Search:** DTO, repository, `SearchBloc` (300 ms debounce via a timer; request ids make sure only the latest response is applied;
+  under 2 characters → empty state; sort re-runs immediately; retry). `SearchPage`: title `search.placeholder`, outlined autofocus
+  field, a bottom-right sort menu (`search.sort.*`), and result rows with the "status · level · node" subtitle and a lock icon.
+  A locked result → snackbar.
+- DI registers the repositories, the app-wide cubits (AppConfig/Home/Journey) and a `SearchBloc` factory. `app.dart` provides the cubits.
+- **Tests:**
+  - `test/helpers/fixtures.dart`: test copy and journey JSON generators.
+  - `test/helpers/harness.dart`: real theme and providers, a GoRouter with stub lesson/search routes, fake images, phone screen size.
+
+**Decisions (Claude Code; details the SPEC leaves open).**
+- **Engine spacings not fixed by the SPEC:**
+  - top padding `0.04W`;
+  - card bottom → first row centre `0.30W`;
+  - last node → next card `0.20W` (when there's no checkpoint);
+  - card → card `0.10W`;
+  - bottom padding `0.12W`.
+  - A single node left over in a pair row stays at `0.30W`.
+- **Engine test "total height increases monotonically"** is checked as non-decreasing for every count 0–60. Adding the second node
+  of a pair row legitimately does not add height. A separate test asserts strict growth whenever a new row is started.
+- **Available nodes** use the same ring colour as completed ones (`#BDBDBD`), and the selected node gets a white ring. The SPEC defines only completed and locked ring colours.
+- **The empty journey state** reuses `error.not_found.message` (no dedicated copy key exists) with Retry.
+- **A locked checkpoint** renders the arch at 55% opacity with a lock icon.
+
+**Bugs found and fixed.**
+- Flutter's `Path.getBounds()` includes Bézier control points, so the first bounds assertions failed (−10.7 px).
+  The engine was correct; the tests now sample the curve with `computeMetrics`.
+- The hidden reload overlay kept an indeterminate spinner ticking, which made `pumpAndSettle` time out and would waste frames in the app.
+  Now only the spinner is wrapped in `TickerMode(enabled: visible)`, so the overlay's fade-out still animates.
+- The test harness's stub lesson page didn't receive taps (an empty `SizedBox` doesn't hit-test); added `HitTestBehavior.opaque`.
+- Renamed the domain `CardTheme` to `StatusCardTheme` to avoid clashing with Material's `CardTheme`.
+
+**Commands and tests actually run.**
+- `dart run build_runner build --delete-conflicting-outputs` → "Built … wrote 10 outputs". `flutter analyze` → "No issues found!"
+- `flutter test test/journey/journey_layout_engine_test.dart` → `+13: All tests passed!`
+  (counts 0–60 × widths 320/360/411/480, with and without a checkpoint).
+- `flutter test` → `00:11 +91: All tests passed!`. Covers:
+  - Engine; journey DTO incl. malformed and unknown type/state; popover actions.
+  - `JourneyCubit`: all states incl. silent-refresh failure keeping data.
+  - `HomeCubit`; `SearchBloc`: debounce → 1 request, stale response ignored, under-2-chars, sort, failure→retry.
+  - Widgets:
+    - Journey with 1/7/25 nodes + checkpoint;
+    - popover open, close, outside tap, DO IT AGAIN + Completed On;
+    - START → lesson → return reopens the popover;
+    - locked snackbar; checkpoint direct open;
+    - loading, error+retry, empty, reload overlay, silent-refresh failure snackbar.
+  - Home: content, task opens lesson, all-done, skeleton → error → retry.
+  - Search: states, locked snackbar, sort menu.
+
+**Open issues.** Not yet run on an emulator or device; that's planned for step 11.

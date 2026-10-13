@@ -21,6 +21,8 @@ class AppColors {
   static const border = Color(0xFF3A3A3A);
   static const borderSelected = Color(0xFFF5F5F5);
   static const error = Color(0xFFE57373);
+  static const streak = Color(0xFFFF8A3D);
+  static const scrim = Color(0xB3000000);
 }
 
 class AppSizes {

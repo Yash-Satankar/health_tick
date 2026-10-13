@@ -6,6 +6,8 @@ import 'core/routing/router.dart';
 import 'core/theme/theme.dart';
 import 'di.dart';
 import 'features/app_config/presentation/app_config_cubit.dart';
+import 'features/home/presentation/bloc/home_cubit.dart';
+import 'features/journey/presentation/bloc/journey_cubit.dart';
 
 class HealthTickApp extends StatefulWidget {
   const HealthTickApp({super.key, this.router});
@@ -22,7 +24,11 @@ class _HealthTickAppState extends State<HealthTickApp> {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [BlocProvider.value(value: sl<AppConfigCubit>()..load())],
+      providers: [
+        BlocProvider.value(value: sl<AppConfigCubit>()..load()),
+        BlocProvider.value(value: sl<HomeCubit>()),
+        BlocProvider.value(value: sl<JourneyCubit>()),
+      ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
