@@ -1,3 +1,28 @@
-/Resources
+# Reference material (video + reference pack) — never committed.
+# SPEC spells it "Resouces"; on disk it is "Resources". Ignore both.
+/Resources/
 /Resouces/
+
+# Private planning inputs (SPEC.md, schema draft) — user decision 2026-10-13
 /docs/planning/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Node / backend build outputs
+node_modules/
+dist/
+coverage/
+*.log
+
+# Flutter / Android build outputs (also covered by user_journey/.gitignore)
+build/
+.dart_tool/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

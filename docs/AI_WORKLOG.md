@@ -53,3 +53,31 @@ That breaks the first ignore pattern. The file was rewritten from Bash without a
 **Open issues.**
 - The Docker Desktop engine was not running. Claude Code launched Docker Desktop; it is needed from step 2.
 - Android SDK licences may need `flutter doctor --android-licenses` before the APK build (step 12).
+
+---
+
+## 2026-10-13 — Session 1, Step 2: Docker Compose, env and ignore files
+
+**Objective.** SPEC §13 step 2: Docker Compose for Postgres, root `.env.example`, `.gitignore`.
+
+**What Claude Code did.**
+- `docker-compose.yml`: service `postgres` (`postgres:16-alpine`), host port `${POSTGRES_HOST_PORT:-5433}` → 5432, named volume
+  `healthtick_pgdata`, `pg_isready` healthcheck, credentials from the root `.env` (compose fails fast if they are unset).
+- `docker/postgres/init.sql` creates `healthtick_dev` and `healthtick_test`.
+- `.env.example` (placeholders) and a local `.env` (git-ignored, not committed).
+- `.gitignore`: both `Resources/` spellings, `docs/planning/`, `.env*` except `.env.example`, Node/Flutter build outputs, editor files.
+- `.gitattributes`: forces LF for `*.sh/*.sql/*.yml/*.yaml`, so files mounted into the Linux container are not CRLF on Windows.
+
+**Decisions.**
+- Claude Code made the host port configurable (`POSTGRES_HOST_PORT`, default 5433 per SPEC), so a port clash doesn't require editing the compose file.
+- Port 5433 was already held by the user's unrelated container `jobtracker-db-1`. **User decision:** stop that container
+  (`docker stop`; its data volume is untouched). Note: Docker Desktop may restart it later because of its restart policy.
+
+**Commands run / results.**
+- `docker stop jobtracker-db-1` → stopped.
+- `docker compose up -d` → `healthtick-postgres` started. Health status became `healthy`.
+- `psql` inside the container: databases `healthtick_dev` and `healthtick_test` exist. Server: `PostgreSQL 16.15 … (Alpine)`.
+- `docker port healthtick-postgres` → `5432/tcp -> 0.0.0.0:5433`.
+- `git check-ignore -v .env` → ignored by `.gitignore`.
+
+**Open issues.** None.

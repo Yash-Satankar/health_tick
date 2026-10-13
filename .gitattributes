@@ -1,0 +1,5 @@
+# Keep shell/SQL/YAML files LF so they behave the same inside Docker on Windows.
+*.sh   text eol=lf
+*.sql  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf

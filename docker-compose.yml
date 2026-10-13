@@ -1,0 +1,26 @@
+# Postgres for local development and tests (SPEC §3.1).
+# The API runs on the host; only the database is containerised.
+name: healthtick
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthtick-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - healthtick_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d healthtick_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  healthtick_pgdata:

@@ -42,7 +42,7 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 | # | Step | Status |
 |---|---|---|
 | 1 | Inspect environment & inputs; write CLAUDE.md + this plan | ✅ done |
-| 2 | Docker Compose, root `.env.example`, `.gitignore` | ⏳ |
+| 2 | Docker Compose, root `.env.example`, `.gitignore` | ✅ done |
 | 3 | Backend scaffold, config, logging, error handling, `/health`, test harness | ⏳ |
 | 4 | Migration 001 (schema v1 verbatim), codegen, migrate test DB | ⏳ |
 | 5 | Reference pack copy, Fluent Emoji download + attribution, seeder, validator, reset/demo scripts, seed dev DB | ⏳ |
