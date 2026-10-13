@@ -6,6 +6,7 @@ import '../../../../core/copy/app_copy.dart';
 import '../../../../core/copy/copy_context.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/routing/router.dart';
+import '../../../../core/sync/content_sync_service.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
@@ -23,8 +24,9 @@ class JourneyPage extends StatefulWidget {
   State<JourneyPage> createState() => _JourneyPageState();
 }
 
-class _JourneyPageState extends State<JourneyPage> {
+class _JourneyPageState extends State<JourneyPage> with RouteAware {
   final ScrollController _scroll = ScrollController();
+  ModalRoute<void>? _route;
 
   @override
   void initState() {
@@ -34,7 +36,30 @@ class _JourneyPageState extends State<JourneyPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != _route && route is PageRoute) {
+      if (_route != null) appRouteObserver.unsubscribe(this);
+      _route = route;
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  // The content sync service shows "journey updated" only while the Journey is on top.
+  @override
+  void didPush() => JourneyVisibility.instance.visible = true;
+  @override
+  void didPopNext() => JourneyVisibility.instance.visible = true;
+  @override
+  void didPushNext() => JourneyVisibility.instance.visible = false;
+  @override
+  void didPop() => JourneyVisibility.instance.visible = false;
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
+    JourneyVisibility.instance.visible = false;
     _scroll.dispose();
     super.dispose();
   }
@@ -96,7 +121,10 @@ class _JourneyPageState extends State<JourneyPage> {
           JourneyFailure(:final failure) => ErrorView(
             failure: failure,
             copy: copy,
-            onRetry: () => context.read<JourneyCubit>().load(),
+            onRetry: () {
+              context.reloadConfigIfFailed();
+              context.read<JourneyCubit>().load();
+            },
           ),
           JourneyLoaded(:final journey) when journey.statuses.isEmpty => ErrorView(
             key: const ValueKey('journey-empty'),

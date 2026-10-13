@@ -12,5 +12,11 @@ extension CopyContext on BuildContext {
   /// UI copy without subscribing (for callbacks).
   AppCopy get readCopy => read<AppConfigCubit>().state.copy;
 
+  /// Retry handlers call this so copy recovers too when the bootstrap failed earlier (e.g. API was down).
+  void reloadConfigIfFailed() {
+    final cubit = read<AppConfigCubit>();
+    if (cubit.state is AppConfigFailure) cubit.load();
+  }
+
   Bootstrap? get bootstrap => select<AppConfigCubit, Bootstrap?>((cubit) => cubit.state.bootstrapOrNull);
 }

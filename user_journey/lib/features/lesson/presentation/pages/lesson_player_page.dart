@@ -106,7 +106,10 @@ class LessonPlayerView extends StatelessWidget {
                       child: ErrorView(
                         failure: state.loadFailure!,
                         copy: copy,
-                        onRetry: () => bloc.add(const RetryPressed()),
+                        onRetry: () {
+                          context.reloadConfigIfFailed();
+                          bloc.add(const RetryPressed());
+                        },
                       ),
                     ),
                   ],

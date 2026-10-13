@@ -192,6 +192,33 @@ void main() {
     });
   });
 
+  testWidgets('lesson load failure (API down) shows ErrorView; Retry recovers', (tester) async {
+    usePhoneScreen(tester);
+    final repo = MockLessonRepository();
+    var calls = 0;
+    when(() => repo.getLesson(any())).thenAnswer((_) async {
+      if (calls++ == 0) throw const AppException(NetworkFailure());
+      return sampleLesson();
+    });
+    when(() => repo.startAttempt(any())).thenAnswer((_) async => 'attempt-1');
+    await pumpScreen(
+      tester,
+      const SizedBox(),
+      initialLocation: '/player',
+      extraRoutes: {
+        '/player': BlocProvider(
+          create: (_) => LessonPlayerBloc(lessonId: 'lesson-1', repository: repo)..add(const LessonStarted()),
+          child: const LessonPlayerView(),
+        ),
+      },
+    );
+    await tester.pumpAndSettle();
+    expect(find.text("You're offline (api)"), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('error-retry')));
+    await tester.pumpAndSettle();
+    expect(find.text("THAT'S IMPRACTICAL!"), findsOneWidget);
+  });
+
   group('exit, menu, completion', () {
     testWidgets('Back on page 0 opens the exit sheet; cancel keeps the lesson; confirm abandons', (tester) async {
       final repo = await pumpLesson(tester);

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:user_journey/core/error/app_exception.dart';
 import 'package:user_journey/core/error/failure.dart';
+import 'package:user_journey/features/app_config/presentation/app_config_cubit.dart';
 import 'package:user_journey/features/home/data/home_dto.dart';
 import 'package:user_journey/features/home/domain/home.dart';
 import 'package:user_journey/features/home/presentation/bloc/home_cubit.dart';
@@ -103,6 +104,32 @@ void main() {
       await pumpScreen(tester, const HomePage(), homeCubit: HomeCubit(repo));
       await tester.pumpAndSettle();
       expect(find.text('You have completed your journey!'), findsOneWidget);
+    });
+
+    testWidgets('API down at start: fallback texts; Retry also reloads the app copy', (tester) async {
+      usePhoneScreen(tester);
+      final homeRepo = MockHomeRepository();
+      var homeCalls = 0;
+      when(homeRepo.getHome).thenAnswer((_) async {
+        if (homeCalls++ == 0) throw const AppException(NetworkFailure());
+        return _home;
+      });
+      final configRepo = MockAppConfigRepository();
+      var configCalls = 0;
+      when(configRepo.bootstrap).thenAnswer((_) async {
+        if (configCalls++ == 0) throw const AppException(NetworkFailure());
+        return testBootstrap();
+      });
+      final config = AppConfigCubit(configRepo);
+      await config.load();
+      expect(config.state, const AppConfigState.failure(NetworkFailure()));
+      await pumpScreen(tester, const HomePage(), homeCubit: HomeCubit(homeRepo), configCubit: config);
+      await tester.pumpAndSettle();
+      expect(find.text("You're offline"), findsOneWidget); // FallbackMessages (copy not loaded)
+      await tester.tap(find.byKey(const ValueKey('error-retry')));
+      await tester.pumpAndSettle();
+      expect(find.text("today's task"), findsOneWidget); // copy from the API again
+      expect(find.text('Welcome to Health Tick!'), findsOneWidget);
     });
 
     testWidgets('loading skeleton, then error with retry that recovers', (tester) async {

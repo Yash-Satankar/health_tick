@@ -51,7 +51,10 @@ class _HomePageState extends State<HomePage> {
             HomeFailure(:final failure) => ErrorView(
               failure: failure,
               copy: copy,
-              onRetry: () => context.read<HomeCubit>().load(),
+              onRetry: () {
+                context.reloadConfigIfFailed();
+                context.read<HomeCubit>().load();
+              },
             ),
             HomeReady(:final data) => RefreshIndicator(
               onRefresh: () => context.read<HomeCubit>().refresh(),

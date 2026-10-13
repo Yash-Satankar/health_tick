@@ -93,7 +93,10 @@ class SearchView extends StatelessWidget {
                 SearchStatus.failure => ErrorView(
                   failure: state.failure!,
                   copy: copy,
-                  onRetry: () => bloc.add(const SearchRetryPressed()),
+                  onRetry: () {
+                    context.reloadConfigIfFailed();
+                    bloc.add(const SearchRetryPressed());
+                  },
                 ),
                 SearchStatus.success when state.results.isEmpty => _Message(
                   copy('search.no_results.title'),

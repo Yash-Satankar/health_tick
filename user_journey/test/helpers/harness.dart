@@ -48,6 +48,7 @@ Future<void> pumpScreen(
   Widget home, {
   JourneyCubit? journeyCubit,
   HomeCubit? homeCubit,
+  AppConfigCubit? configCubit,
   Bootstrap? bootstrap,
   LessonRouteRecorder? lessons,
   String initialLocation = '/',
@@ -57,7 +58,7 @@ Future<void> pumpScreen(
   final configRepo = MockAppConfigRepository();
   final resolvedBootstrap = bootstrap ?? testBootstrap();
   when(configRepo.bootstrap).thenAnswer((_) async => resolvedBootstrap);
-  final config = AppConfigCubit(configRepo)..emit(AppConfigState.ready(resolvedBootstrap));
+  final config = configCubit ?? (AppConfigCubit(configRepo)..emit(AppConfigState.ready(resolvedBootstrap)));
   final journey = journeyCubit ?? JourneyCubit(MockJourneyRepository());
   final homeCub = homeCubit ?? HomeCubit(MockHomeRepository());
   final recorder = lessons ?? LessonRouteRecorder();

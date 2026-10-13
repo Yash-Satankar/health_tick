@@ -591,3 +591,46 @@ for step 5/6:
     - completion screen; CONTENT_CHANGED restart.
 
 **Open issues.** Not yet exercised against the real API on a device or emulator (step 11).
+
+---
+
+## 2026-10-13 — Session 1, Step 10: content sync, lifecycle refresh, final error states
+
+**Objective.** SPEC §13 step 10.
+
+**What Claude Code did.**
+- `core/sync/content_sync_service.dart` (`ContentSyncService`, a `WidgetsBindingObserver`):
+  - Owns the SSE stream (`SseClient.connect`). Reconnects using `ReconnectPolicy` (1/2/5/10/30 s, reset after a `hello`).
+  - Tracks `lastVersion`: the first `hello` only records it; a newer `content_changed` or `hello` →
+    `JourneyCubit.silentRefresh`, `HomeCubit.refresh`, `AppConfigCubit.load`, plus the `journey.updated.toast` **only if the Journey is visible**.
+  - On a reconnect it always refetches silently, even when the version is unchanged (SPEC §10 "refetch on reconnect"; ETags keep it cheap).
+  - App resume → silent refresh + immediate reconnect. Pause → the stream is closed (no background connection).
+  - Never touches the lesson player, so a lesson in progress finishes with the content it loaded.
+- **Journey visibility:** `JourneyPage` is now `RouteAware` through the router's `appRouteObserver` and sets `JourneyVisibility.instance.visible`.
+- `app.dart`:
+  - Starts and stops the sync service. App-level toasts go through a `scaffoldMessengerKey`, positioned above bottom bars.
+  - `HealthTickApp(enableContentSync: false)` is available for tests.
+- **Final error states:** every Retry (Home, Journey, Search, Lesson) also calls `context.reloadConfigIfFailed()`. If the API was down at
+  start-up, copy recovers together with the screen. Before this, titles would have stayed on the empty/fallback copy until a content change.
+
+**Decisions (Claude Code).**
+- **Background pause:** the SSE stream is closed while the app is paused. The SPEC only requires a refresh on resume; this saves battery.
+- **"Journey visible"** = the Journey route is the top route. Content changes while a lesson or Search is open still refresh the data, without a toast.
+
+**Bugs found and fixed.**
+- A Bash `node -e` command interpreted backticks in a doc comment as command substitution, producing an empty reference in a comment. Fixed the comment.
+
+**Commands and tests actually run.**
+- `flutter analyze` → "No issues found!"
+- `flutter test test/core/content_sync_service_test.dart` → `+6: All tests passed!`. Covers:
+  - First hello records the version; a newer change refreshes all three targets + toast.
+  - Stale/duplicate/ping/garbage events are ignored.
+  - No toast when the Journey isn't visible.
+  - A dropped stream reconnects; a newer version → refresh + toast; same version → silent refetch.
+  - Connect failures back off through the policy delays.
+  - Pause closes / resume reconnects and refreshes.
+- `flutter test` → `00:24 +138: All tests passed!`. New:
+  - Lesson load failure → Retry recovers.
+  - Home with the API down at start shows FallbackMessages; Retry reloads both the copy and the data.
+
+**Open issues.** On-device verification is step 11.

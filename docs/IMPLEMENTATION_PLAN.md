@@ -82,7 +82,7 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 | 7 | Flutter scaffold, theme, core layers (network, errors, SSE, markup, routing, DI) | ✅ done |
 | 8 | Home, Journey (layout engine first, with tests), Search | ✅ done |
 | 9 | Lesson player (blocks, questions, feedback, exit sheet, menu, completion) | ✅ done |
-| 10 | Content sync, lifecycle refresh, final error states | ⏳ |
+| 10 | Content sync, lifecycle refresh, final error states | ✅ done |
 | 11 | Full test run, fixes, E2E if a device/emulator is available | ⏳ |
 | 12 | Docs + worklog completion, release APK, final report | ⏳ |
 
