@@ -15,7 +15,9 @@ content changes to the app in real time over Server-Sent Events.
 - **Database:** PostgreSQL 16 in Docker; LISTEN/NOTIFY → SSE for real-time updates.
 
 **Links.**
-- Demo video: _TODO: add link_
+- Demo video: _TODO: add link_. It was recorded from an automated, scripted walkthrough (`integration_test`, profile build) running on a
+  real device (OnePlus Nord CE, Android 13) against the local backend. The real-time step was triggered from the laptop.
+  See [Recording the demo video](#recording-the-demo-video).
 - APK (GitHub release v1.0.0): _TODO: add link_
 
 **Important: the APK needs a locally running backend.** The release APK is built with `API_BASE_URL=http://localhost:3000` and talks to
@@ -37,7 +39,8 @@ Then open **HealthTick** on the phone. Without the backend running and `adb reve
 - [`docs/API_SPECIFICATION.md`](docs/API_SPECIFICATION.md) and [`docs/DATABASE_DESIGN.md`](docs/DATABASE_DESIGN.md).
 
 **Known limitations.**
-- The APK has been run on the Android emulator (using the same `adb reverse` setup), not yet on a physical phone. It is debug-signed.
+- The app has run on a physical phone (OnePlus Nord CE, Android 13; the profile build used for the demo walkthrough). The **release** APK
+  itself was smoke-tested on the Android emulator with the same `adb reverse` setup. It is debug-signed.
 - Most of the manual visual checklist against the reference video is still open. That behaviour is covered by widget, integration and end-to-end tests.
 - Android only. Light theme, video mode, authentication, bottom navigation and offline disk caching of API data are out of scope.
 - No authentication: the app identifies itself as the seeded demo user via `X-User-Id`.
@@ -171,6 +174,29 @@ adb reverse tcp:3000 tcp:3000      # API on your PC at :3000
 ```
 
 The APK is signed with the debug key (Flutter template default). For an emulator build, use `API_BASE_URL=http://10.0.2.2:3000`.
+
+## Recording the demo video
+
+`scripts/record-demo.ps1` records the demo end to end from a USB-connected phone. It needs Docker Postgres running, port 3000 free
+(the script starts and owns its own API process), and [scrcpy](https://github.com/Genymobile/scrcpy) (`winget install --id Genymobile.scrcpy -e`).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\record-demo.ps1 [-Device <adb serial>]
+# → demo/demo_raw.mp4 (git-ignored), plus demo/shots/*.png verification screenshots and logs
+```
+
+What the script does:
+1. Sets up the phone: `adb reverse`, show touches, Do Not Disturb, stay awake.
+2. Resets the demo progress.
+3. Runs `integration_test/demo_walkthrough_test.dart` with `flutter drive --profile`. This is a human-paced walkthrough.
+4. Reacts to the `DEMO_MARKER:*` lines the test prints:
+   - starts scrcpy recording;
+   - changes the Insider node count to 5 and back to 3 (the real-time step);
+   - stops the API and restarts it after 6 s (the offline step).
+5. Finishes the recording cleanly by closing the scrcpy window, so the mp4 is finalised.
+6. Restores the phone settings and resets progress.
+
+Some phones (e.g. OnePlus/ColorOS) block changing global settings such as Do Not Disturb over adb unless *USB debugging (Security settings)* is enabled. In that case, turn on Do Not Disturb by hand.
 
 ## Demonstrating real-time changes
 

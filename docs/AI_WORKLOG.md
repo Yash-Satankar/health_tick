@@ -817,3 +817,79 @@ The user then asked Claude Code to pause the emulator testing, commit the work i
   - Claude Code stopped the emulator (`adb emu kill`) and reran the suite: `00:21 +145: All tests passed!`
   - No test was changed.
 - `which gh` → not found. The GitHub CLI isn't installed, so release v1.0.0 must be created and the APK uploaded manually (as the user offered).
+
+---
+
+## 2026-10-13 — Session 2: automated demo video on a real phone
+
+**User's instructions (summary).**
+- Record the demo video from the user's USB phone, fully automated.
+- Setup: check each tool and ask before installing; `adb reverse`; Docker + an API the script owns; `progress:reset`; scrcpy recorder;
+  phone show-touches / DND / stay-awake, all restored afterwards.
+- A human-paced `integration_test/demo_walkthrough_test.dart` (7 steps) run with `flutter drive --profile`, plus an orchestrator
+  `scripts/record-demo.ps1` that reacts to `DEMO_MARKER` lines.
+- Verify the video, re-record broken takes, `progress:reset` at the end, add this entry and a README line, and don't commit the video.
+
+**User decisions.**
+- Install scrcpy via winget.
+- Turn Do Not Disturb on manually, after the phone rejected it over adb.
+- Restart Docker Desktop when it hung.
+- After take 5 couldn't start (the phone dropped off adb): **keep take 4**.
+
+**What Claude Code did.**
+- Installed scrcpy 4.1 (`winget install --id Genymobile.scrcpy -e`; user-approved). ffmpeg was not installed.
+- **Dependencies:** added the SDK `flutter_driver` dev dependency (needed by `test_driver/integration_test.dart` for `flutter drive`; SDK
+  package, not in SPEC §8.1). Added `test_driver/integration_test.dart`, and `/demo/` to `.gitignore`.
+- **`integration_test/demo_walkthrough_test.dart`:**
+  - Uses the `fullyLive` frame policy so animations are recorded, with real-time pauses (~2.5 s per screen, a pause before every tap) and slow animated scrolling.
+  - Prints `DEMO_MARKER:START/REALTIME/REALTIME_REVERT/STOP_API/SHOT:<name>/DONE`.
+  - Steps 1–7 as requested. **Deviation:** on a fresh user node 2 only unlocks after *all five* node-1 lessons, so after the welcome lesson
+    the test quickly completes node 1's other four lessons before watching the fill flow into node 2.
+  - Step 7 implemented as specified with the Journey's own behaviour. The Journey keeps its data on a failed reload (SPEC §8.4), so the offline
+    state is the "You're offline" snackbar and the Journey's retry is Reload, tapped every 4 s until it succeeds.
+- **`scripts/record-demo.ps1`:**
+  - Pre-flight: phone, Postgres, port 3000 free, and the device actually connected.
+  - Saves and restores phone settings; owns the API process (tsx tree killed with `taskkill /T`).
+  - Starts scrcpy on `START` and stops it with a window close on `DONE`, so the mp4 is finalised.
+  - Runs `npm run demo:set-node-count` on `REALTIME`/`REALTIME_REVERT`; on `STOP_API`, stop → 6 s → start.
+  - Pulls `SHOT` screenshots for verification and reports the duration and size from Windows file metadata.
+- README: a demo-video line in the Submission overview and a "Recording the demo video" section. The known-limitations line was updated
+  (the app has now run on a physical phone).
+
+**Takes and bugs (all recorded in `demo/console_attempt*.txt`, git-ignored).**
+1. Pre-flight stopped the run: the Docker engine was down (Docker Desktop closed). With the user's approval, Claude Code stopped the leftover
+   Gradle daemon (memory) and restarted Docker Desktop; Postgres came back healthy.
+2. Profile build failed: `:integration_test:compileProfileJavaWithJavac` → "Java compilation initialization error … transforms/…/jdkImage".
+   That Gradle transform-cache entry held only a stale lock (left by the earlier OOM-killed daemon), and an orphaned Gradle daemon (PID 4592)
+   kept it locked. Claude Code killed that daemon and deleted the single 1 KB cache entry (a regenerable Gradle cache, not user data).
+   `flutter build apk --profile` then succeeded. Also on this OnePlus, `settings put global …` (DND, stay-on) is denied without
+   "USB debugging (Security settings)"; the user enabled DND by hand.
+3. The walkthrough ran correctly through step 4 (both real-time updates seen), then **two bugs**:
+   - Search typing never reached the app. On a real device the test text input isn't registered, so `tester.enterText` doesn't fire
+     `onChanged`. Fixed by feeding characters through the field's `EditableTextState.updateEditingValue`.
+   - **No video was saved.** `Start-Process -ArgumentList` joins its array with spaces without quoting, so
+     `--window-title 'HealthTick demo (recording)'` split into stray arguments and scrcpy exited at once. Fixed by building one quoted
+     argument string and logging scrcpy's output; a 6 s probe confirmed start → window close → "Recording complete".
+4. **Take 4: all steps passed.** `05:10 +2: All tests passed!`, flutter drive exit 0, all markers handled (API stopped 16:11:53, back 16:12:03),
+   and the recorder stopped cleanly. Screenshots reviewed: Home, Journey fill to node 1, popover, welcome lesson, completion,
+   fill flowing into node 2, wrong-answer feedback card, exit sheet, expanded zone accordion, +13 completion, real-time 5 → 3 Insider nodes,
+   search "procrast", saved toast, feedback dialog.
+   - The `offline` screenshot was taken ~10 s late because the blocking API restart held up the marker loop; this doesn't affect the video.
+5. Take 5 (to show a full-screen offline error with Retry via Search) never started: the phone dropped off adb. **The user chose to keep
+   take 4.** The two post-take-4 changes, which were never run (a new step 7 and a non-blocking API restart), were **reverted**, so the committed
+   test and script are exactly what produced take 4. The only change kept is a trivial pre-flight check that the device is connected.
+
+**Video (take 4).** `D:\HealthTick\demo\demo_raw.mp4`: duration **00:05:06**, **158.5 MB** (166,210,378 bytes).
+- scrcpy logged "Recording complete to mp4 file".
+- Valid MP4 header (`ftyp isom`); Windows reads the duration from the file metadata.
+- Not committed (`/demo/` is ignored).
+
+**Commands actually run (final).**
+- Orchestrator take 4: `powershell -ExecutionPolicy Bypass -File scripts/record-demo.ps1 -Device e2c9f545` → walkthrough
+  `05:10 +2: All tests passed!`, script report "Video: … duration 00:05:06 size 158.5 MB".
+- `npm run progress:reset` afterwards → all user progress cleared; Insider node count 3.
+- `flutter analyze` → "No issues found!"
+
+**Open issues.**
+- The phone's Do Not Disturb was turned on by the user and has to be turned off by them; show_touches was restored to 0 by the script.
+- The offline segment in the video shows the Journey's snackbar-style offline state, not a full-screen error with Retry.
