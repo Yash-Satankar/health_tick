@@ -3,9 +3,6 @@
 /Resources/
 /Resouces/
 
-# Private planning inputs (SPEC.md, schema draft) — user decision 2026-10-13
-/docs/planning/
-
 # Secrets
 .env
 .env.*

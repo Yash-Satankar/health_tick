@@ -1,5 +1,53 @@
 # HealthTick Journey
 
+## Submission overview
+
+**What was built.** A working recreation of the HealthTick **Journey and lesson** feature. A Flutter Android app shows a minimal Home screen and
+the Journey path: status/level cards and a dynamic node path whose fill animates up to the furthest unlocked node. It also has a node
+popover, search, and a full lesson player with content blocks, single/multiple/free-text questions, a feedback card, an exit sheet,
+save/feedback menus and a completion screen. Everything the app shows (node counts, titles, lesson text, labels, colours, feedback
+headlines) comes from a Node.js/PostgreSQL backend that enforces the progress rules (unlocking, grading, points, streak) and pushes
+content changes to the app in real time over Server-Sent Events.
+
+**Tech stack.**
+- **App:** Flutter 3.44 / Dart 3.12, flutter_bloc, freezed, json_serializable, dio, go_router, get_it, cached_network_image.
+- **Backend:** Node.js 24 (≥ 22) / TypeScript strict, Express 5, Kysely + pg, Zod, pino, helmet; Vitest + Supertest.
+- **Database:** PostgreSQL 16 in Docker; LISTEN/NOTIFY → SSE for real-time updates.
+
+**Links.**
+- Demo video: _TODO: add link_
+- APK (GitHub release v1.0.0): _TODO: add link_
+
+**Important: the APK needs a locally running backend.** The release APK is built with `API_BASE_URL=http://localhost:3000` and talks to
+the API on your PC through `adb reverse`:
+
+```powershell
+docker compose up -d                                   # Postgres (see Quick start for the one-time .env, migrate and seed)
+cd user_journey_backend; npm run dev                   # API on http://localhost:3000
+adb install -r app-release.apk                         # phone connected over USB with USB debugging on
+adb reverse tcp:3000 tcp:3000                          # phone's localhost:3000 → PC's port 3000
+```
+Then open **HealthTick** on the phone. Without the backend running and `adb reverse` set up, the app shows its offline error state with Retry.
+
+**Docs and AI history.**
+- [`docs/planning/`](docs/planning/): the approved SPEC and schema from the planning chat.
+- [`docs/AI_WORKLOG.md`](docs/AI_WORKLOG.md): the step-by-step record of the AI-assisted build.
+- [`docs/ai-history/`](docs/ai-history/): the raw conversation exports.
+- [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md): versions, status and the manual verification checklist.
+- [`docs/API_SPECIFICATION.md`](docs/API_SPECIFICATION.md) and [`docs/DATABASE_DESIGN.md`](docs/DATABASE_DESIGN.md).
+
+**Known limitations.**
+- The APK has been run on the Android emulator (using the same `adb reverse` setup), not yet on a physical phone. It is debug-signed.
+- Most of the manual visual checklist against the reference video is still open. That behaviour is covered by widget, integration and end-to-end tests.
+- Android only. Light theme, video mode, authentication, bottom navigation and offline disk caching of API data are out of scope.
+- No authentication: the app identifies itself as the seeded demo user via `X-User-Id`.
+- Lesson images are crops from a 576 px-wide recording, so they're slightly soft on high-DPI screens. Content that never appears in the
+  reference is authored or a placeholder (marked by `provenance` in the content YAML).
+- Deviations, approved by the user: Node 24 instead of 22; freezed 3.2.5 (freezed 4 needs a newer Dart); the Gradle heap was lowered to 2 GB.
+  After the planning phase, the path fill rule and fill animation were corrected against the reference video (SPEC §9.4).
+
+---
+
 A recreation of the HealthTick **Journey and lesson** feature:
 
 - `user_journey/`: Flutter app (Android). It only lays out and renders. Every title, label, colour, lesson text, feedback headline and node count comes from the API.

@@ -780,3 +780,40 @@ The user then asked Claude Code to pause the emulator testing, commit the work i
 - The release APK is debug-signed (Flutter template default).
 - `docs/planning/SPEC.md` (including the §9.4 update) is git-ignored by the user's decision, so it is not in the repository.
 - Nothing has been pushed. Pushing to `origin` waits for the user's approval.
+
+---
+
+## 2026-10-13 — Session 2: submission preparation and push
+
+**User's instructions (summary).** Prepare the repo for submission and push:
+1. Commit `docs/planning/` (SPEC + schema; the approved planning documents the assessors asked to see), keep `Resouces/` ignored, and confirm there are no secrets.
+2. Add a "Submission overview" section to the README.
+3. Re-run the backend tests, `flutter test` and `content:validate`.
+4. Write this worklog entry.
+5. Push `main`.
+6. Create GitHub release v1.0.0 with `app-release.apk` if the GitHub CLI is available, without committing the APK.
+
+**What Claude Code did.**
+- Removed `/docs/planning/` from `.gitignore`. This reverses the user's step-1 decision, now at the user's request. Committed
+  `docs/planning/SPEC.md` (with the 2026-10-13 §9.4 fill-rule update) and `docs/planning/healthtick_schema_v1.sql`.
+  `Resources/` and `Resouces/` remain ignored.
+- **Secret scan** (`grep -niE "password|secret|token|api[_-]?key|postgres://|BEGIN (RSA|PRIVATE)|ghp_|sk-"`): the only hit is SPEC §3.2's
+  documented example `DATABASE_URL=postgres://healthtick:healthtick@localhost:5433/healthtick_dev`, which is the local Docker dev default.
+  No real credentials, tokens or keys. The other matches were the words "tokens"/"secrets" in prose.
+- README: added the "Submission overview" section with:
+  - what was built and the tech stack;
+  - placeholders for the demo video and APK release links;
+  - the note that the APK needs a locally running backend via `adb reverse`, with commands;
+  - where the docs and AI history live;
+  - the known limitations.
+- The release APK is not committed (`build/` is git-ignored).
+
+**Commands and tests actually run.**
+- `npx vitest run` → `Test Files  14 passed (14)` / `Tests  136 passed (136)`
+- `npm run content:validate` → "Content OK: 2 statuses, 30 lessons (19 placeholders), 74 pages, 49 assets."
+- `flutter test`:
+  - First full run: the **Dart VM crashed** ("Crash occurred when compiling … in optimizing JIT mode"); earlier a test file failed to load.
+    The same file passed on its own (`+11`). Diagnosis: memory exhaustion on this 7.4 GB machine with the emulator running.
+  - Claude Code stopped the emulator (`adb emu kill`) and reran the suite: `00:21 +145: All tests passed!`
+  - No test was changed.
+- `which gh` → not found. The GitHub CLI isn't installed, so release v1.0.0 must be created and the APK uploaded manually (as the user offered).
