@@ -15,9 +15,11 @@ final class LayoutCardItem extends JourneyLayoutItem {
 }
 
 final class LayoutNodeItem extends JourneyLayoutItem {
-  const LayoutNodeItem(super.id, {this.isCheckpoint = false, this.isCompleted = false});
+  const LayoutNodeItem(super.id, {this.isCheckpoint = false, this.isFilled = false});
   final bool isCheckpoint;
-  final bool isCompleted;
+
+  /// The node is completed or available (i.e. not locked): the connector leading INTO it is filled.
+  final bool isFilled;
 }
 
 @immutable
@@ -44,12 +46,27 @@ class NodeSlot {
 
 @immutable
 class ConnectorSegment {
-  const ConnectorSegment({required this.path, required this.completed, required this.toNodeId});
+  const ConnectorSegment({
+    required this.path,
+    required this.filled,
+    required this.toNodeId,
+    required this.start,
+    required this.length,
+  });
   final Path path;
 
-  /// Drawn in the completed colour if the node it ENDS at is completed (SPEC §9.4).
-  final bool completed;
+  /// Filled colour if the node it leads INTO is completed or available; track colour if it is locked
+  /// (SPEC §9.4 as corrected on 2026-10-13).
+  final bool filled;
   final String toNodeId;
+
+  /// Distance from the start of the whole path (segments are in path order, top to bottom).
+  final double start;
+
+  /// Length of this segment (PathMetric).
+  final double length;
+
+  double get end => start + length;
 }
 
 @immutable
@@ -60,6 +77,7 @@ class JourneyLayout {
     required this.cards,
     required this.nodes,
     required this.connectors,
+    required this.filledLength,
     required this.strokeWidth,
     required this.nodeDiameter,
     required this.ringWidth,
@@ -69,7 +87,14 @@ class JourneyLayout {
   final double height;
   final List<CardSlot> cards;
   final List<NodeSlot> nodes;
+
+  /// Connector segments as one sequence in path order.
   final List<ConnectorSegment> connectors;
+
+  /// Total length of the contiguous filled prefix of [connectors] (where the fill animation stops).
+  final double filledLength;
+
+  double get totalConnectorLength => connectors.isEmpty ? 0 : connectors.last.end;
   final double strokeWidth;
   final double nodeDiameter;
   final double ringWidth;
@@ -117,7 +142,8 @@ class JourneyLayoutEngine {
     var cursorBottom = topPaddingRatio * w;
     _Last last = _Last.none;
     CardSlot? currentCard;
-    NodeSlot? previousNode;
+    NodeSlot? previousNode; // across levels: the path is one continuous line
+    var pathLength = 0.0;
     var rowIndex = -1; // rows placed under the current card
     var rowCenterY = 0.0;
     var pairHasRightSlotFree = false;
@@ -136,7 +162,6 @@ class JourneyLayoutEngine {
           cards.add(currentCard);
           cursorBottom = rect.bottom;
           last = _Last.card;
-          previousNode = null;
           rowIndex = -1;
           pairHasRightSlotFree = false;
 
@@ -166,11 +191,24 @@ class JourneyLayoutEngine {
           );
           final slot = NodeSlot(id: item.id, rect: rect, hitRect: hitRect, isCheckpoint: item.isCheckpoint);
 
-          final from = previousNode?.center ?? (currentCard == null ? null : Offset(w / 2, currentCard.rect.bottom));
-          if (from != null) {
+          final card = currentCard;
+          final firstInLevel = rowIndex == 0 && x == centerXRatio * w;
+          Path? path;
+          if (previousNode == null) {
+            // Card → first node: a straight vertical line.
+            if (card != null) path = _connect(Offset(w / 2, card.rect.bottom), center, w);
+          } else if (firstInLevel && card != null && previousNode.rect.bottom <= card.rect.bottom) {
+            // From the previous level's last node (e.g. a checkpoint) down through the card into this node.
+            path = _connect(previousNode.center, Offset(w / 2, card.rect.top), w)..lineTo(center.dx, center.dy);
+          } else {
+            path = _connect(previousNode.center, center, w);
+          }
+          if (path != null) {
+            final length = path.computeMetrics().fold<double>(0, (sum, m) => sum + m.length);
             connectors.add(
-              ConnectorSegment(path: _connect(from, center, w), completed: item.isCompleted, toNodeId: item.id),
+              ConnectorSegment(path: path, filled: item.isFilled, toNodeId: item.id, start: pathLength, length: length),
             );
+            pathLength += length;
           }
           nodes.add(slot);
           previousNode = slot;
@@ -181,12 +219,18 @@ class JourneyLayoutEngine {
     }
 
     final height = (items.isEmpty ? 0.0 : cursorBottom) + bottomPaddingRatio * w;
+    var filledLength = 0.0;
+    for (final segment in connectors) {
+      if (!segment.filled) break;
+      filledLength = segment.end;
+    }
     return JourneyLayout(
       width: w,
       height: height,
       cards: List.unmodifiable(cards),
       nodes: List.unmodifiable(nodes),
       connectors: List.unmodifiable(connectors),
+      filledLength: filledLength,
       strokeWidth: strokeRatio * w,
       nodeDiameter: d,
       ringWidth: ringRatio * w,

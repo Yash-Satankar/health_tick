@@ -666,3 +666,54 @@ for step 5/6:
 
 **User instruction.** The user asked to pause emulator testing, leave the code working and commit, then implement the journey fill
 animation (next entry). Step 11 resumes afterwards.
+
+---
+
+## 2026-10-13 — Session 2: journey path fill rule + fill animation (user-reported change)
+
+**Origin.** **The user** spotted from the reference video that the Journey's path-fill animation was missing.
+In the separate **planning chat**, the user verified it in the video (4.9–6.2 s) and corrected the fill rule.
+The user then asked Claude Code to pause the emulator testing, commit the work in progress, and make this change.
+
+**User's instructions (summary).**
+- **Fill rule** (supersedes SPEC §9.4 "completed colour if the node it ends at is completed"): a segment is filled if the node it leads into is
+  `completed` or `available`, and drawn in the track colour if it is `locked`. This includes card→first-node and the connector from a checkpoint through the next card.
+- **Engine output:** connectors as one ordered sequence with PathMetric lengths, plus `filledLength` (contiguous filled prefix).
+- **Painter:** track first, then fill up to `animatedLength` with `extractPath`, round caps. The `AnimationController` is the painter's `repaint:` and the Stack is not rebuilt per frame.
+- **Animation:** duration `(len / 2.5W)` s clamped to 0.4–2.0 s, `easeOut`.
+  - Triggers: first load/Reload → from 0; refresh/unlock → from the previous length; shrink → jump.
+  - Reduced motion → final state.
+- **Tests:** the engine and widget tests listed below, plus re-running the journey tests. **Docs:** update SPEC §9.4 and this worklog.
+
+**What Claude Code did.**
+- `journey_layout_engine.dart`:
+  - `LayoutNodeItem.isFilled` (= not locked) replaces `isCompleted`. `ConnectorSegment` now has `filled`, `start`, `length`, `end`.
+  - `JourneyLayout.filledLength` and `totalConnectorLength`.
+  - `previousNode` is no longer reset at a card. The first node of a later level gets one segment: previous node → top of its card → straight down through the card into the node, drawn behind the card because the painter is the bottom layer of the Stack.
+- `path_painter.dart`: draws every segment in the track colour, then the fill up to `fill.value`; the partial segment uses `PathMetric.extractPath` with the same stroke and round caps. `repaint: fill`, and `animatedLength` is exposed for tests.
+- `journey_path_view.dart`:
+  - An `AnimationController` updates a `ValueNotifier<double>` (`easeOut` between from/to); the painter sits inside a `RepaintBoundary`.
+  - Triggers are evaluated whenever the layout is recomputed, in a post-frame callback, so the first frame shows nothing filled.
+  - First load and a new `fillReplayId` (the cubit's reload counter, `scrollToTopId`) → from 0. Growth → from the current length. Shrink, width change or `MediaQuery.disableAnimations` → jump.
+- `journey_page.dart` passes `fillReplayId`.
+- `docs/planning/SPEC.md` §9.4: the old rule is struck through and the fill rule and animation rules are added.
+  Note: `docs/planning/` is git-ignored (user decision, step 1), so the SPEC edit exists on disk but is not committed.
+
+**Decisions (Claude Code).**
+- When the previous level ends on a non-centred node (no checkpoint), the cross-level connector curves from that node to the top centre of the next card, then runs straight down. This keeps one continuous path.
+- A width change (rotation/resize) jumps to the new length rather than replaying, since lengths scale with W.
+- ffmpeg is not installed on this machine, so Claude Code did not extract frames itself. The behaviour was implemented from the user's description, which the user had verified against the video in the planning chat.
+
+**Commands and tests actually run.**
+- `flutter analyze` → "No issues found!"
+- `flutter test test/journey/journey_layout_engine_test.dart` → `+17: All tests passed!`. New tests:
+  - Into available = filled, into locked = not.
+  - `filledLength` stops at the first locked node, even if a later segment is filled.
+  - Segments are in path order with contiguous `start`s, continuous geometry and node order.
+  - The checkpoint → next card → first node connector is vertical and passes through the card.
+  - The existing 0–60 invariants still pass with the new connectors.
+- `flutter test test/journey` → `00:07 +47: All tests passed!`. New widget tests: t=0 → 0, partial at 150 ms, complete after settle;
+  a silent refresh unlocking more starts from the previous length and grows; progress reset jumps; reduced motion draws the final state immediately.
+- `flutter test` → `00:17 +145: All tests passed!`
+
+**Open issues.** Unchanged from the previous entry: images not rendering on the emulator, and avatar contrast. Step 11 resumes now.

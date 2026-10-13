@@ -6,7 +6,7 @@ import 'package:user_journey/features/journey/presentation/layout/journey_layout
 /// Two levels like the seed: level A with [a] lesson nodes (+ checkpoint), level B with [b] lesson nodes.
 List<JourneyLayoutItem> twoLevels(int a, int b, {bool checkpoint = true}) => [
   const LayoutCardItem('A'),
-  for (var i = 0; i < a; i++) LayoutNodeItem('a$i', isCompleted: i < 2),
+  for (var i = 0; i < a; i++) LayoutNodeItem('a$i', isFilled: i < 2),
   if (checkpoint) const LayoutNodeItem('a-cp', isCheckpoint: true),
   const LayoutCardItem('B'),
   for (var i = 0; i < b; i++) LayoutNodeItem('b$i'),
@@ -132,9 +132,9 @@ void main() {
     const w = 400.0;
     final layout = JourneyLayoutEngine.compute(twoLevels(4, 0), w);
 
-    test('one segment per node: card→first node, then node→node; completed when the END node is completed', () {
+    test('one segment per node: card→first node, then node→node; filled when the node it leads into is unlocked', () {
       expect(layout.connectors.map((c) => c.toNodeId), ['a0', 'a1', 'a2', 'a3', 'a-cp']);
-      expect(layout.connectors.map((c) => c.completed), [true, true, false, false, false]);
+      expect(layout.connectors.map((c) => c.filled), [true, true, false, false, false]);
     });
 
     test('card → first node is a straight vertical line', () {
@@ -150,6 +150,70 @@ void main() {
       expect(across.height, lessThan(0.001));
       final toCentre = curveBounds(layout.connectors[3].path);
       expect(toCentre.right, closeTo(0.92 * w, 0.01 * w));
+    });
+  });
+
+  group('fill (SPEC 9.4, corrected 2026-10-13)', () {
+    const w = 400.0;
+    // b0 completed, b1 completed, b2 available, b3+ locked; checkpoint locked; next level locked.
+    List<JourneyLayoutItem> items({int unlocked = 3}) => [
+      const LayoutCardItem('A'),
+      for (var i = 0; i < 6; i++) LayoutNodeItem('b$i', isFilled: i < unlocked),
+      const LayoutNodeItem('cp', isCheckpoint: true),
+      const LayoutCardItem('B'),
+      for (var i = 0; i < 3; i++) LayoutNodeItem('i$i'),
+    ];
+
+    test('a segment into an available node is filled; one into a locked node is not', () {
+      final layout = JourneyLayoutEngine.compute(items(), w);
+      final byTarget = {for (final c in layout.connectors) c.toNodeId: c.filled};
+      expect(byTarget['b2'], isTrue, reason: 'b2 is available');
+      expect(byTarget['b3'], isFalse, reason: 'b3 is locked');
+    });
+
+    test('filledLength stops at the first locked node (contiguous prefix only)', () {
+      final layout = JourneyLayoutEngine.compute(items(), w);
+      final firstLocked = layout.connectors.indexWhere((c) => !c.filled);
+      expect(layout.filledLength, closeTo(layout.connectors[firstLocked].start, 0.001));
+      expect(layout.filledLength, closeTo(layout.connectors.take(3).fold<double>(0, (s, c) => s + c.length), 0.001));
+      // A filled segment after a locked one does not extend the prefix.
+      final gap = JourneyLayoutEngine.compute([
+        const LayoutCardItem('A'),
+        const LayoutNodeItem('x0', isFilled: true),
+        const LayoutNodeItem('x1'),
+        const LayoutNodeItem('x2', isFilled: true),
+      ], w);
+      expect(gap.filledLength, closeTo(gap.connectors.first.length, 0.001));
+      expect(JourneyLayoutEngine.compute(items(unlocked: 0), w).filledLength, 0);
+    });
+
+    test('segments are one sequence in path order: contiguous starts, continuous geometry, node order', () {
+      final layout = JourneyLayoutEngine.compute(items(unlocked: 6), w);
+      expect(layout.connectors.map((c) => c.toNodeId), [...layout.nodes.map((n) => n.id)]);
+      var expectedStart = 0.0;
+      Offset? previousEnd;
+      for (final c in layout.connectors) {
+        expect(c.start, closeTo(expectedStart, 0.001));
+        final metrics = c.path.computeMetrics().toList();
+        expect(c.length, closeTo(metrics.fold<double>(0, (s, m) => s + m.length), 0.001));
+        final startPoint = metrics.first.getTangentForOffset(0)!.position;
+        if (previousEnd != null) expect((startPoint - previousEnd).distance, lessThan(0.5));
+        previousEnd = metrics.last.getTangentForOffset(metrics.last.length)!.position;
+        expectedStart += c.length;
+      }
+      expect(layout.totalConnectorLength, closeTo(expectedStart, 0.001));
+    });
+
+    test('the connector from the checkpoint runs through the next card into its first node', () {
+      final layout = JourneyLayoutEngine.compute(items(unlocked: 7), w);
+      final intoInsider = layout.connectors.firstWhere((c) => c.toNodeId == 'i0');
+      final b = curveBounds(intoInsider.path);
+      expect(b.width, lessThan(0.001), reason: 'checkpoint and first node are both centred');
+      expect(b.top, closeTo(layout.node('cp')!.center.dy, 0.01));
+      expect(b.bottom, closeTo(layout.node('i0')!.center.dy, 0.01));
+      expect(b.top, lessThan(layout.cards[1].rect.top));
+      expect(b.bottom, greaterThan(layout.cards[1].rect.bottom));
+      expect(intoInsider.filled, isFalse);
     });
   });
 

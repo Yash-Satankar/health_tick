@@ -9,6 +9,7 @@ import 'package:user_journey/features/journey/data/journey_dto.dart';
 import 'package:user_journey/features/journey/domain/journey.dart';
 import 'package:user_journey/features/journey/presentation/bloc/journey_cubit.dart';
 import 'package:user_journey/features/journey/presentation/pages/journey_page.dart';
+import 'package:user_journey/features/journey/presentation/widgets/path_painter.dart';
 import 'package:user_journey/features/lesson/domain/lesson_exit.dart';
 
 import '../helpers/fixtures.dart';
@@ -27,6 +28,8 @@ Future<MockJourneyRepository> pumpJourney(WidgetTester tester, Journey journey, 
 }
 
 void main() {
+  fillAnimationTests();
+
   group('Journey renders the dynamic path', () {
     for (final count in [1, 7, 25]) {
       testWidgets('$count Beginner nodes + checkpoint, 3 Insider nodes', (tester) async {
@@ -189,6 +192,74 @@ void main() {
       await tester.pump();
       expect(find.text('Check your internet connection and try again. (api)'), findsOneWidget);
       expect(nodeFinder('b1'), findsOneWidget);
+    });
+  });
+}
+
+JourneyPathPainter pathPainter(WidgetTester tester) =>
+    tester.widget<CustomPaint>(find.byKey(const ValueKey('journey-path-paint'))).painter! as JourneyPathPainter;
+
+void fillAnimationTests() {
+  group('fill animation (SPEC 9.4)', () {
+    Future<(MockJourneyRepository, JourneyCubit)> pumpLoaded(WidgetTester tester, Journey journey) async {
+      usePhoneScreen(tester);
+      final repo = MockJourneyRepository();
+      when(() => repo.getJourney(force: any(named: 'force'))).thenAnswer((_) async => journey);
+      final cubit = JourneyCubit(repo);
+      await pumpScreen(tester, const JourneyPage(), journeyCubit: cubit);
+      await tester.pump(); // journey loaded → first frame with the path
+      return (repo, cubit);
+    }
+
+    testWidgets('after load: nothing filled at t=0, partial mid-way, complete after settling', (tester) async {
+      await pumpLoaded(tester, testJourney(completed: 2));
+      final painter = pathPainter(tester);
+      final target = painter.layout.filledLength;
+      expect(target, greaterThan(0));
+      expect(painter.animatedLength, 0);
+      await tester.pump(); // post-frame callback starts the animation
+      await tester.pump(const Duration(milliseconds: 150));
+      final mid = pathPainter(tester).animatedLength;
+      expect(mid, greaterThan(0));
+      expect(mid, lessThan(target));
+      await tester.pumpAndSettle();
+      expect(pathPainter(tester).animatedLength, closeTo(target, 0.001));
+    });
+
+    testWidgets('a silent refresh that unlocks more animates only the new part; a shrink jumps', (tester) async {
+      final (repo, cubit) = await pumpLoaded(tester, testJourney(completed: 1));
+      await tester.pumpAndSettle();
+      final before = pathPainter(tester).animatedLength;
+
+      when(() => repo.getJourney()).thenAnswer((_) async => testJourney(completed: 3));
+      await cubit.silentRefresh();
+      await tester.pump(); // new layout
+      await tester.pump(); // animation starts from the previous length
+      expect(pathPainter(tester).animatedLength, closeTo(before, 0.001));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(pathPainter(tester).animatedLength, greaterThan(before));
+      await tester.pumpAndSettle();
+      final grown = pathPainter(tester).layout.filledLength;
+      expect(pathPainter(tester).animatedLength, closeTo(grown, 0.001));
+
+      when(() => repo.getJourney()).thenAnswer((_) async => testJourney(completed: 0)); // progress reset
+      await cubit.silentRefresh();
+      await tester.pump();
+      await tester.pump();
+      final shrunk = pathPainter(tester).layout.filledLength;
+      expect(shrunk, lessThan(grown));
+      expect(pathPainter(tester).animatedLength, closeTo(shrunk, 0.001)); // no animation
+    });
+
+    testWidgets('with reduced motion the final state is drawn immediately', (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
+        disableAnimations: true,
+      );
+      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      await pumpLoaded(tester, testJourney(completed: 2));
+      await tester.pump();
+      final painter = pathPainter(tester);
+      expect(painter.animatedLength, closeTo(painter.layout.filledLength, 0.001));
     });
   });
 }

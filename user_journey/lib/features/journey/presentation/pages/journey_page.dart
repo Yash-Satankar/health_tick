@@ -141,6 +141,7 @@ class _JourneyPageState extends State<JourneyPage> with RouteAware {
                 lockedAsset: context.bootstrap?.lockedNodeAsset,
                 selectedNodeId: state.selectedNodeId,
                 pulseNodeId: state.pulseNodeId,
+                fillReplayId: state.scrollToTopId,
                 scrollController: _scroll,
                 onNodeTap: _onNodeTap,
                 onLockedTap: _onLockedTap,
