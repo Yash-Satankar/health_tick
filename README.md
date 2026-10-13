@@ -15,10 +15,10 @@ content changes to the app in real time over Server-Sent Events.
 - **Database:** PostgreSQL 16 in Docker; LISTEN/NOTIFY → SSE for real-time updates.
 
 **Links.**
-- Demo video: _TODO: add link_. It was recorded from an automated, scripted walkthrough (`integration_test`, profile build) running on a
+- Demo video: [Demo Video](https://drive.google.com/file/d/1FGYouHtjvntXfHgZcrLNMu0FejTukbU9/view?usp=sharing). It was recorded from an automated, scripted walkthrough (`integration_test`, profile build) running on a
   real device (OnePlus Nord CE, Android 13) against the local backend. The real-time step was triggered from the laptop.
   See [Recording the demo video](#recording-the-demo-video).
-- APK (GitHub release v1.0.0): _TODO: add link_
+- APK (GitHub release v1.0.0): https://github.com/Yash-Satankar/health_tick/releases/download/v1.0.0/app-release.apk
 
 **Important: the APK needs a locally running backend.** The release APK is built with `API_BASE_URL=http://localhost:3000` and talks to
 the API on your PC through `adb reverse`:
