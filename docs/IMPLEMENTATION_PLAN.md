@@ -59,7 +59,7 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 | 1 | Inspect environment & inputs; write CLAUDE.md + this plan | ✅ done |
 | 2 | Docker Compose, root `.env.example`, `.gitignore` | ✅ done |
 | 3 | Backend scaffold, config, logging, error handling, `/health`, test harness | ✅ done |
-| 4 | Migration 001 (schema v1 verbatim), codegen, migrate test DB | ⏳ |
+| 4 | Migration 001 (schema v1 verbatim), codegen, migrate test DB | ✅ done |
 | 5 | Reference pack copy, Fluent Emoji download + attribution, seeder, validator, reset/demo scripts, seed dev DB | ⏳ |
 | 6 | Modules: app-config, home, journey, lessons, attempts, search, saved, feedback, events (+ tests) | ⏳ |
 | 7 | Flutter scaffold, theme, core layers (network, errors, SSE, markup, routing, DI) | ⏳ |

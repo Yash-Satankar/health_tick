@@ -138,3 +138,49 @@ That breaks the first ignore pattern. The file was rewritten from Bash without a
   `curl /api/v1/nope` → 404 envelope with `X-Request-Id`. The server was stopped with `taskkill`.
 
 **Open issues.** None.
+
+---
+
+## 2026-10-13 — Session 1, Step 4: migration 001, codegen, test database
+
+**Objective.** SPEC §13 step 4: schema v1 as migration 001 verbatim, codegen, migrate the test database.
+
+**What Claude Code did.**
+- Copied `docs/planning/healthtick_schema_v1.sql` to `src/db/migrations/001_schema_v1.sql` **byte-identical**
+  (SHA-256 `1480f771…ab9c71` for both). `.gitattributes` keeps it LF.
+- `src/db/migrations/index.ts` registers migrations explicitly (a static provider, not file-system discovery, which is fragile
+  on Windows/tsx). 001 runs the SQL file with `sql.raw` (multi-statement, simple query protocol).
+  `src/db/migrate.ts` (`migrateToLatest`) and `scripts/migrate.ts` (`--test` targets `TEST_DATABASE_URL`).
+- `scripts/codegen.ts` runs kysely-codegen against `DATABASE_URL`. Mappings: `int8 → number` and `date → string`, to match the
+  pg type parsers. Migration tables are excluded. It generated `src/db/types.ts` (23 tables).
+- `build` now also copies `.sql` migrations into `dist/` (`scripts/copy-sql.mjs`).
+- Test harness: `globalSetup` now **drops and recreates `healthtick_test`** (name checked to end in `_test`) and migrates it fresh on
+  every run, as SPEC §11.2 requires. Only the `_test` database is touched, as the project rules allow.
+- `test/integration/schema.test.ts` checks:
+  - 23 tables exist and re-migrating is a no-op.
+  - Content triggers bump `content_state.version` and NOTIFY on commit.
+  - User tables don't bump the version, and `updated_at` is maintained.
+  - A CHECK constraint (`ck_graded_is_choice`) is enforced.
+
+**Finding (no change to the schema).** The content triggers are `FOR EACH STATEMENT`, so a transaction with N content statements
+bumps the version N times and sends N `content_changed` notifications at commit (the test asserts exactly this). Two consequences
+for step 5/6:
+1. The SSE layer will coalesce notifications that arrive in a short burst into one event carrying the latest version. This is
+   how "`demo:set-node-count` emits exactly one event" (SPEC §11.2) will hold.
+2. Statement-level triggers fire even when a statement affects zero rows. For the seed to be idempotent (a rerun "changes nothing",
+   including the content version), the seeder must diff against the existing rows and issue no statement for unchanged rows.
+
+**Bugs found and fixed.**
+- Kysely 0.29 moved `Migrator` to the `kysely/migration` subpath; the root import failed at runtime. Fixed the imports.
+- `migrateToLatest(db: Kysely<unknown>)` didn't accept the typed `Kysely<DB>`; changed it to `Kysely<any>`, as Kysely's own
+  migration API does.
+
+**Commands and tests actually run.**
+- `npm run db:migrate` → "Migrated healthtick_dev: 001_schema_v1". Second run → "healthtick_dev is already up to date".
+- `npm run db:migrate:test` → "Migrated healthtick_test: 001_schema_v1".
+- `npm run db:codegen` → "✓ Introspected 23 tables and generated .\src\db\types.ts".
+- `npm run build` → `dist/db/migrations/` contains `001_schema_v1.sql` and `index.js`.
+- `npx tsc --noEmit` → OK. `npx eslint .` → clean. `npx prettier --check .` → all formatted.
+- `npx vitest run` → `Test Files  4 passed (4)` / `Tests  20 passed (20)`.
+
+**Open issues.** None.
