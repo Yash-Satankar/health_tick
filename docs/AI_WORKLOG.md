@@ -356,3 +356,66 @@ for step 5/6:
     `content_changed {228}`, `content_changed {230}`: exactly one event per script run.
 
 **Open issues.** None for the backend. The Flutter app starts in step 7.
+
+---
+
+## 2026-10-13 — Session 1, Step 7: Flutter scaffold, theme, core layers
+
+**Objective.** SPEC §13 step 7: Flutter scaffold, theme, and the core layers (network, errors, SSE, markup, routing, DI).
+
+**What Claude Code did.**
+- **Dependencies:** added the SPEC §8.1 packages (versions in `IMPLEMENTATION_PLAN.md`) and removed `cupertino_icons`.
+  Dev-only additions:
+  - `build_runner` (needed to run freezed/json_serializable).
+  - SDK `integration_test` (for SPEC §11.4).
+- `analysis_options.yaml`: formatter width 120; generated files excluded from analysis. Generated `*.g.dart` / `*.freezed.dart`
+  are committed so a clean clone builds without running the generator first.
+- **Core:**
+  - `config/env.dart`: dart-defines `API_BASE_URL` (default `http://10.0.2.2:3000`), `DEMO_USER_ID`, and asset URL resolution (SPEC §3.4).
+  - `theme/tokens.dart` + `theme.dart`: SPEC §9.1 tokens, dark only.
+  - `error/failure.dart`: sealed `NetworkFailure`, `TimeoutFailure`, `ServerFailure(code)` (with locked/not-found/content-changed helpers),
+    `ParsingFailure`, `UnexpectedFailure`; each maps to an `app_copy` key. `error/app_exception.dart`.
+  - `copy/app_copy.dart`: `AppCopy` (bootstrap copy) and `FallbackMessages`, the only hardcoded UI text, covering error/retry keys only.
+  - `network/api_client.dart`: Dio with 10 s/15 s timeouts and the `X-User-Id` interceptor. It unwraps `{data}`, maps every error,
+    and has `getConditional` for the journey ETag/304.
+  - `network/sse_client.dart`: incremental `SseParser` (chunks, CRLF, multi-line data), `ReconnectPolicy` (1/2/5/10/30 s),
+    and `SseClient` over a Dio stream.
+  - `markup/markup_parser.dart`: a pure parser using the same scanning rule as the backend validator. Malformed input → plain text, never throws.
+    Also `TokenResolver` (`{{user.name}}`, `{{answer.key}}` → value or "—", unknown tokens literal + logged) and `markup_text.dart`
+    (highlight `#D9F2C4` on `#111111`).
+  - **Widgets:**
+    - `RemoteImage`: cached, with a pulsing placeholder, a broken-image fallback, and a test hook (`debugBuilder`) because plugins are unavailable in widget tests.
+    - `PrimaryButton`: shows a spinner while loading.
+    - `ErrorView`, `LoadingView`, `showToast`.
+  - `routing/router.dart`: go_router routes per SPEC §8.3, plus a `RouteObserver`. `di.dart` (get_it), `app.dart`, `main.dart`.
+- **app_config feature:** `BootstrapDto` (json_serializable, `checked: true`) → `Bootstrap` entity, a repository, and `AppConfigCubit`
+  (freezed sealed state `loading / ready / failure`; a failed reload keeps the loaded config).
+- **Android:** `INTERNET` permission, `usesCleartextTraffic="true"` (the local API is plain HTTP), and the label "HealthTick".
+- Home/Journey/Search/Lesson pages are empty stubs for now (no text), filled in steps 8–9.
+- Removed the template `test/widget_test.dart`, which tested the counter app.
+
+**Decisions (Claude Code).**
+- **freezed 3.2.5:** freezed 4.x requires Dart ≥ 3.13; this machine has Dart 3.12.2.
+- **Mixed DTO approach:** json_serializable for flat DTOs, freezed for bloc states, and hand-written parsing for polymorphic lesson blocks,
+  so unknown block/node types can be skipped or defaulted defensively (SPEC §8.5).
+- **`DEMO_USER_ID` default** is the seeded demo user id; it's seed data rather than environment config, so the default keeps `flutter run` working.
+- **CONTENT_CHANGED dialog text:** there is no copy key for it, so the dialog will show the server error message
+  ("The lesson content changed during this attempt") with the `error.retry` label. This avoids hardcoded text.
+
+**Bugs found and fixed.**
+- Dio 5.11 added `DioExceptionType.transformTimeout`, so the error switch was non-exhaustive. It is now mapped to `TimeoutFailure`.
+- A placeholder `typedef CheckedFromJsonException` was wrong; it now imports the real class from json_annotation.
+- The AndroidManifest edit via a Node script silently did nothing because the file uses CRLF. Redone with the Edit tool and verified.
+
+**Commands and tests actually run.**
+- `flutter pub add …` (resolved; versions above). `dart run build_runner build --delete-conflicting-outputs` → "Built … wrote 3 outputs".
+- `flutter analyze` → "No issues found!"
+- `flutter test` → `00:02 +33: All tests passed!` Covers:
+  - Markup parser and interpolation (nesting, tokens in formats, malformed fallback, paragraphs, "—", unknown tokens).
+  - Error mapping (timeouts, connection/socket, envelopes incl. LESSON_LOCKED/NOT_FOUND/CONTENT_CHANGED, non-JSON → Parsing, unexpected).
+  - ApiClient with a mocked Dio (envelope unwrap, DTO type mismatch → ParsingFailure).
+  - Dio config and the X-User-Id interceptor; asset URL resolution.
+  - SSE parser (chunks, CRLF, multi-line) and reconnect policy.
+  - Bootstrap DTO, including a malformed payload; AppConfigCubit (bloc_test).
+
+**Open issues.** None.

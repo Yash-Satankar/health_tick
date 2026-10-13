@@ -35,7 +35,24 @@ Build order follows `docs/planning/SPEC.md` §13. Status is updated at the end o
 | kysely-codegen | 0.20.0 | |
 | @types/node | ^22 | API surface pinned to Node 22 |
 
-Flutter package versions are recorded here in step 7.
+### Flutter package versions (chosen in step 7; Flutter 3.44.9 / Dart 3.12.2)
+| Package | Version | Note |
+|---|---|---|
+| flutter_bloc / bloc | 9.1.1 / 9.2.1 | |
+| dio | 5.11.1 | |
+| go_router | 18.0.2 | |
+| get_it | 9.3.0 | |
+| cached_network_image | 4.0.3 | |
+| flutter_svg | 2.3.0 | listed in SPEC §8.1 |
+| lottie | 3.6.1 | listed in SPEC §8.1 |
+| intl | 0.20.2 | |
+| freezed_annotation / freezed | 3.1.0 / 3.2.5 | freezed 4.x needs Dart ≥ 3.13; 3.2.5 is the newest stable for Dart 3.12 |
+| json_annotation / json_serializable | 4.12.0 / 6.14.1 | |
+| bloc_test / mocktail | 10.0.0 / 1.0.5 | |
+| build_runner | 2.15.1 | extra (dev): required to run the freezed/json_serializable generators |
+| integration_test | SDK | extra (dev, SDK): the SPEC §11.4 end-to-end test |
+
+`cupertino_icons` (template default) was removed: not in SPEC §8.1.
 
 ## Inputs check
 
@@ -62,7 +79,7 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 | 4 | Migration 001 (schema v1 verbatim), codegen, migrate test DB | ✅ done |
 | 5 | Reference pack copy, Fluent Emoji download + attribution, seeder, validator, reset/demo scripts, seed dev DB | ✅ done |
 | 6 | Modules: app-config, home, journey, lessons, attempts, search, saved, feedback, events (+ tests) | ✅ done |
-| 7 | Flutter scaffold, theme, core layers (network, errors, SSE, markup, routing, DI) | ⏳ |
+| 7 | Flutter scaffold, theme, core layers (network, errors, SSE, markup, routing, DI) | ✅ done |
 | 8 | Home, Journey (layout engine first, with tests), Search | ⏳ |
 | 9 | Lesson player (blocks, questions, feedback, exit sheet, menu, completion) | ⏳ |
 | 10 | Content sync, lifecycle refresh, final error states | ⏳ |
