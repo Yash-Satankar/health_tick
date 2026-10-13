@@ -1,0 +1,7 @@
+dist
+coverage
+node_modules
+seed
+static
+src/db/migrations/*.sql
+src/db/types.ts

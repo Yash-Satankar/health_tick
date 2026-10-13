@@ -20,7 +20,22 @@ Build order follows `docs/planning/SPEC.md` §13. Status is updated at the end o
 | ffmpeg | not installed (optional; only for extracting video frames) |
 | psql | not installed (not needed; Postgres runs in Docker) |
 
-Backend/Flutter package versions are recorded here when chosen (steps 3 and 7).
+### Backend package versions (chosen in step 3)
+| Package | Version | Note |
+|---|---|---|
+| express | 5.3.0 | |
+| kysely / pg | 0.29.6 / 8.23.1 | |
+| zod | 4.6.7 | |
+| pino / pino-http | 10.4.0 / 11.0.0 | |
+| helmet / cors | 8.3.0 / 2.8.6 | |
+| yaml | 2.9.1 | extra: YAML seed parsing |
+| typescript | 6.0.3 | 7.0.2 exists, but typescript-eslint 8.71 requires `<6.1` |
+| tsx / vitest / supertest | 4.23.15 / 5.0.4 / 7.3.1 | |
+| eslint / typescript-eslint / prettier | 10.12.0 / 8.71.2 / 3.9.10 | |
+| kysely-codegen | 0.20.0 | |
+| @types/node | ^22 | API surface pinned to Node 22 |
+
+Flutter package versions are recorded here in step 7.
 
 ## Inputs check
 
@@ -43,7 +58,7 @@ Folder spelling: SPEC/brief say `Resouces/`; on disk it is `Resources/` (already
 |---|---|---|
 | 1 | Inspect environment & inputs; write CLAUDE.md + this plan | ✅ done |
 | 2 | Docker Compose, root `.env.example`, `.gitignore` | ✅ done |
-| 3 | Backend scaffold, config, logging, error handling, `/health`, test harness | ⏳ |
+| 3 | Backend scaffold, config, logging, error handling, `/health`, test harness | ✅ done |
 | 4 | Migration 001 (schema v1 verbatim), codegen, migrate test DB | ⏳ |
 | 5 | Reference pack copy, Fluent Emoji download + attribution, seeder, validator, reset/demo scripts, seed dev DB | ⏳ |
 | 6 | Modules: app-config, home, journey, lessons, attempts, search, saved, feedback, events (+ tests) | ⏳ |
