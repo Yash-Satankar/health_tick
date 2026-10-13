@@ -13,6 +13,8 @@ import 'features/home/presentation/bloc/home_cubit.dart';
 import 'features/journey/data/journey_repository_impl.dart';
 import 'features/journey/domain/journey.dart';
 import 'features/journey/presentation/bloc/journey_cubit.dart';
+import 'features/lesson/data/lesson_repository_impl.dart';
+import 'features/lesson/domain/lesson.dart';
 import 'features/search/data/search_repository_impl.dart';
 import 'features/search/domain/search.dart';
 import 'features/search/presentation/bloc/search_bloc.dart';
@@ -32,6 +34,7 @@ void configureDependencies({String baseUrl = Env.apiBaseUrl, String userId = Env
     )
     ..registerLazySingleton<HomeRepository>(() => HomeRepositoryImpl(HomeRemoteDataSource(sl<ApiClient>())))
     ..registerLazySingleton<JourneyRepository>(() => JourneyRepositoryImpl(JourneyRemoteDataSource(sl<ApiClient>())))
+    ..registerLazySingleton<LessonRepository>(() => LessonRepositoryImpl(LessonRemoteDataSource(sl<ApiClient>())))
     ..registerLazySingleton<SearchRepository>(() => SearchRepositoryImpl(SearchRemoteDataSource(sl<ApiClient>())))
     // app-wide state (the content sync service refreshes these)
     ..registerLazySingleton<AppConfigCubit>(() => AppConfigCubit(sl<AppConfigRepository>()))

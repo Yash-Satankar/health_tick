@@ -504,3 +504,90 @@ for step 5/6:
   - Search: states, locked snackbar, sort menu.
 
 **Open issues.** Not yet run on an emulator or device; that's planned for step 11.
+
+---
+
+## 2026-10-13 — Session 1, Step 9: lesson player
+
+**Objective.** SPEC §13 step 9: blocks, questions, feedback, exit sheet, menu, completion.
+
+**What Claude Code did.**
+- **Domain/data:**
+  - Sealed `LessonBlock` types, `Question`, `LessonPage`, `Lesson`, `AnswerFeedback`, `LessonCompletion`, `LessonRepository`.
+  - Hand-written `lesson_dto.dart`: unknown or malformed blocks are **skipped with a debug log** and the page still renders.
+    An unknown `responseType` renders the page as content.
+  - `LessonRepositoryImpl`: GET lesson, POST attempts, PUT answers, POST complete/abandon, PUT/DELETE saved, POST feedback.
+- **`LessonPlayerBloc`:**
+  - SPEC §8.4 events: `Started, OptionToggled, TextChanged, CtaPressed, BackPressed, ExitConfirmed, RetryPressed, SaveToggled, FeedbackSubmitted`.
+  - State (freezed): lesson, attemptId, pageIndex, answers per page, showingFeedbackFor, feedback, hpCounter, submitting,
+    inlineError, completion, isSaved, plus loadFailure/feedback flags.
+  - One-shot effects (`ToastEffect`, `ShowExitSheetEffect`, `ContentChangedEffect`, `FeedbackSentEffect`, `CloseEffect`) carry an `effectId`.
+  - **CTA:**
+    - content → next page (+1 counter), or complete on the last page;
+    - question → local validation (`lesson.choice.validation_message`, or `lesson.free_text.validation_title` + the question's
+      `validationMessage`), then PUT; feedback → card, otherwise advance;
+    - feedback card → advance.
+  - **Back:** feedback → question with the selection kept; page N>0 → N−1 (−1 counter); page 0 → exit sheet.
+  - **Errors:**
+    - `ExitConfirmed` → abandon fire-and-forget → pop `abandoned`.
+    - Failed answer/complete → inline error + Retry, place kept.
+    - `CONTENT_CHANGED` → dialog that restarts the lesson.
+    - `LESSON_LOCKED`/`NOT_FOUND` → message, then pop.
+  - `freeTextAnswers` feeds `{{answer.key}}`.
+- **UI (`lesson_player_page.dart` + widgets):**
+  - Top bar: back, a progress bar animated over 250 ms to `(pageIndex+1)/pageCount`, heart-pulse icon + counter.
+  - `AnimatedSwitcher` 220 ms crossfade with a new scroll view per page (back to the top).
+  - Bottom bar: inline error + Retry, full-width CTA with the content's label (spinner while submitting), ⋮.
+  - **Blocks:** heading 22 bold; paragraph; bulleted/numbered lists; full-width image (radius 12, aspect ratio from the asset,
+    shimmer, broken fallback); callout (56 dp icon + text); icon heading (24 dp + coloured bold text); accordion
+    (chevron, 200 ms `AnimatedSize`); spacer.
+  - **Questions:** option cards (radius-12 border, radio or checkbox, brighter border + filled indicator when selected);
+    free text (min 4 lines, counter when `maxLength`).
+  - **Feedback card:** illustration ~0.3W, bold centred headline, `answer_prefix` + **highlighted** correct answer(s), explanation paragraphs.
+  - **Exit sheet:** title/message, confirm/cancel.
+  - **⋮ menu:** Save row toggling `menu.save`/`menu.saved` with a check, plus the "DONE! Bookmark Added 😁" toast, and Send feedback.
+  - **Feedback dialog:** bootstrap reasons as checkboxes, Other text field, footer, SUBMIT disabled until valid,
+    `other_required` hint when Others is ticked, inline error on failure, toast on success.
+  - **Completion screen:** medal (lesson asset or bootstrap medal) scales in over 400 ms with a light sparkle; headline,
+    bordered message card, server `healthPointsEarned`, Continue → pop `completed` (+ `unlockedNodeId`).
+  - Android system back is routed through `PopScope` to `BackPressed`.
+
+**Decisions (Claude Code).**
+- **Health-point counter** follows SPEC §4.12: +1 per forward page move (after the feedback card), −1 on Back, never below 0.
+  Completing on the last page doesn't increment it. The completion screen shows the server's `healthPointsEarned` as "+N".
+- **Option selection** is ignored while the feedback card is showing or a submit is in flight. Multiple choice ignores selections beyond `maxSelections`.
+- **Free-text length** is counted in code points (`runes`), matching the backend.
+- **Save** is optimistic and reverts with an error toast on failure.
+
+**Bugs found and fixed.**
+- **Real app bug:** the ⋮ button's tap handler called `context.bootstrap`, a provider `select`, outside `build`, which threw an assertion when tapped.
+  Feedback reasons are now read during `build`.
+- **Real UX bug:** floating toasts covered the bottom CTA, so a tap right after a validation toast hit the toast.
+  `showToast` now floats above bottom bars (bottom margin 96).
+- Test fixes, not app fixes:
+  - The highlight check now walks nested spans.
+  - The counter assertion reads the `Text` directly.
+  - The CONTENT_CHANGED widget test now throws the real `AppException(ServerFailure('CONTENT_CHANGED'))`.
+  - The fixture `completion` was renamed to avoid a clash with the `flutter_test` matcher of the same name.
+- Lint `prefer_initializing_formals` → the bloc takes `required this.repository`.
+
+**Commands and tests actually run.**
+- `dart run build_runner build --delete-conflicting-outputs` → wrote 4 outputs. `flutter analyze` → "No issues found!"
+- `flutter test test/lesson` → `00:05 +39: All tests passed!`
+- `flutter test` → `00:15 +130: All tests passed!`. New lesson coverage:
+  - DTO: every block type, unknown/malformed skipped, unknown response type, malformed lesson, answer and completion payloads.
+  - Bloc, every §8.4 transition:
+    - start, locked → close, load failure → retry;
+    - content CTA; choice and free-text validation toasts;
+    - graded → feedback → advance; ungraded advances directly;
+    - failed submit → retry; completion + Continue exit; CONTENT_CHANGED; failed complete;
+    - Back from feedback, page N and page 0; ExitConfirmed abandons;
+    - selection rules; interpolation source; save success and revert; feedback error → success.
+  - Widgets:
+    - each block type incl. highlight colours and accordion expand; malformed markup → plain text;
+    - progress and counter; single choice + feedback card + Back keeps selection; multiple choice; free text + interpolation;
+    - inline error + Retry; exit sheet cancel/confirm; Android system back; ⋮ save toggle + toast;
+    - feedback dialog validation (disabled → Others requires text → error → success toast);
+    - completion screen; CONTENT_CHANGED restart.
+
+**Open issues.** Not yet exercised against the real API on a device or emulator (step 11).

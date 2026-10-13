@@ -11,6 +11,8 @@ void showToast(BuildContext context, String message, {String? title, Duration du
     ..showSnackBar(
       SnackBar(
         duration: duration,
+        // Float above bottom action bars (e.g. the lesson CTA) so the toast never blocks them.
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
         content: Text.rich(
           TextSpan(
             children: [
