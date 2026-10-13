@@ -634,3 +634,35 @@ for step 5/6:
   - Home with the API down at start shows FallbackMessages; Retry reloads both the copy and the data.
 
 **Open issues.** On-device verification is step 11.
+
+---
+
+## 2026-10-13 — Session 2, Step 11 (in progress): E2E on the emulator; paused by the user
+
+**Context.** The previous Claude Code session ended mid-step (context/session limit). This session resumed from `git status` and the worklog.
+
+**What Claude Code did.**
+- **E2E test:** `integration_test/app_flow_test.dart` implements the SPEC §11.4 flow:
+  Home → Journey → node 1 → welcome lesson → back (popover open) → finish node 1 → graded lesson in node 2 answered wrong → feedback card → complete → Home health total increased.
+- **Gradle heap:** the first emulator build crashed the Gradle JVM. The Flutter template's `org.gradle.jvmargs=-Xmx8G` exceeds this machine's
+  7.4 GB RAM (0.8 GB free with the emulator and Docker running). Lowered it to `-Xmx2G` (+ `kotlin.daemon.jvmargs=-Xmx1G`).
+  Removed the JVM crash log and git-ignored `android/.kotlin/` and `hs_err_pid*.log`.
+- **Manual run:** built a debug APK, installed it and screenshotted it. Home and Journey render live API data: streak 1, 23 points;
+  card, path, centre/pair rows, S-curves, completed check, locked colours.
+
+**Commands and tests actually run.**
+- `npm run progress:reset`, then `flutter test integration_test/app_flow_test.dart -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000`
+  → `01:54 +1: All tests passed!` (backend on the dev DB; emulator `Medium_Phone`, Android 16 KB page-size image).
+- `flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:3000`, `adb install`, then screenshots.
+
+**Bugs found, not yet fixed (open).**
+1. **Images don't render on the emulator.** Cards and node icons stay on the loading placeholder.
+   - The PNGs *are* downloaded into `cache/libCachedImageData`, but the cache manager's sqflite database was never created (`databases/` is empty).
+   - So `CachedNetworkImage`'s store never completes. Root cause not yet confirmed.
+   - A diagnostic `flutter run` with verbose cache logging failed: the Dart compiler exited unexpectedly, probably low memory. The temporary
+     logging line in `main.dart` was reverted.
+   - The E2E test passed because it checks behaviour, not pixels.
+2. The Home avatar initial is dark text on a dark circle (low contrast).
+
+**User instruction.** The user asked to pause emulator testing, leave the code working and commit, then implement the journey fill
+animation (next entry). Step 11 resumes afterwards.
